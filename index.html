@@ -1,0 +1,1392 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#231F4D">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Keyring">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Keyring</title>
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg:#F4F3F8;--surface:#FFFFFF;--surface-2:#ECEAF3;--ink:#1D1B33;--ink-2:#55536E;--ink-3:#8B89A3;--line:#E4E2EE;
+  --hero:#231F4D;--hero-2:#2F2A63;--hero-ink:#FFFFFF;--hero-mute:#B5B0E6;
+  --money:#12A36B;--money-soft:#E2F5EC;--due:#D98E04;--due-soft:#FFF3D6;--late:#E5484D;--late-soft:#FDE8E9;
+  --promise:#7C5CFF;--promise-soft:#EEE9FF;--wa:#1FAF5B;--wa-ink:#fff;
+  --shadow:0 1px 2px rgba(29,27,51,.06),0 6px 18px -10px rgba(29,27,51,.18);
+  --f-display:'Bricolage Grotesque',ui-rounded,-apple-system,system-ui,sans-serif;
+  --f-body:'Figtree',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  --safe-b:env(safe-area-inset-bottom);--safe-t:env(safe-area-inset-top);
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#12111C;--surface:#1C1A2B;--surface-2:#262438;--ink:#EEEDF7;--ink-2:#B4B2C9;--ink-3:#7F7D96;--line:#2E2C44;
+  --hero:#2A2560;--hero-2:#363078;--hero-mute:#A9A3E0;
+  --money:#3CCB8F;--money-soft:#163027;--due:#F2B33D;--due-soft:#33280F;--late:#FF6B6F;--late-soft:#3A1C20;
+  --promise:#A08BFF;--promise-soft:#2A2248;--shadow:0 1px 2px rgba(0,0,0,.3),0 8px 22px -12px rgba(0,0,0,.6);
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.45 var(--f-body);-webkit-font-smoothing:antialiased;padding-bottom:calc(96px + var(--safe-b))}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+[hidden]{display:none!important}
+:focus-visible{outline:2.5px solid var(--promise);outline-offset:2px;border-radius:10px}
+.num{font-family:var(--f-display);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.wrap{max-width:640px;margin:0 auto;padding:calc(14px + var(--safe-t)) 16px 24px}
+
+/* ---------- Cabeçalho de página ---------- */
+.pagehead{display:flex;align-items:center;gap:12px;margin:4px 2px 16px}
+.pagehead h1{font:700 30px/1.05 var(--f-display);letter-spacing:-.025em;margin:0;flex:1}
+.pagehead .sub{display:block;font:500 14px var(--f-body);color:var(--ink-3);letter-spacing:0;margin-bottom:2px}
+.iconbtn{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--surface);box-shadow:var(--shadow);flex-shrink:0}
+.iconbtn svg{width:20px;height:20px}
+.backbtn{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;background:var(--surface);box-shadow:var(--shadow)}
+
+/* ---------- Herói da semana ---------- */
+.hero{background:var(--hero);color:var(--hero-ink);border-radius:26px;padding:18px 18px 14px;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-70px;width:220px;height:220px;border-radius:50%;background:var(--hero-2);opacity:.7;pointer-events:none}
+.hero>*{position:relative;z-index:1}
+.hero-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.hero-range{font:600 15px var(--f-display);color:var(--hero-mute)}
+.hero-range b{color:#fff;font-weight:700}
+.hero-nav{display:flex;gap:6px}
+.hero-nav button{width:34px;height:34px;border-radius:11px;background:rgba(255,255,255,.1);display:grid;place-items:center}
+.hero-nav svg{width:18px;height:18px}
+.hero-body{display:flex;align-items:center;gap:18px}
+.ring{width:124px;height:124px;flex-shrink:0;position:relative}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .track{stroke:rgba(255,255,255,.12)}
+.ring .fill{stroke:#5BE3A8;stroke-linecap:round;transition:stroke-dashoffset 1.1s cubic-bezier(.2,.8,.2,1)}
+.ring .late{stroke:#FF8A8D;stroke-linecap:round}
+.ring-center{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring-center b{font:800 28px/1 var(--f-display);letter-spacing:-.03em}
+.ring-center small{display:block;font-size:12px;color:var(--hero-mute);margin-top:3px}
+.hero-figs{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.fig-main span{font-size:13px;color:var(--hero-mute)}
+.fig-main b{display:block;font:700 30px/1.05 var(--f-display);letter-spacing:-.025em;white-space:nowrap}
+.fig-main i{font-style:normal;font-size:13px;color:var(--hero-mute)}
+.fig-pills{display:flex;flex-wrap:wrap;gap:6px}
+.fpill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;font-weight:600;font-size:13px;background:rgba(255,255,255,.1);white-space:nowrap}
+.fpill .d{width:7px;height:7px;border-radius:50%}
+.days{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-top:16px;border-top:1px solid rgba(255,255,255,.1);padding-top:12px}
+.day{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0 7px;border-radius:14px;color:var(--hero-mute);min-height:66px}
+.day .wd{font-size:11px;font-weight:600}
+.day .dn{font:700 17px/1 var(--f-display);color:#fff}
+.day .dots{display:flex;gap:3px;height:7px;flex-wrap:wrap;justify-content:center;max-width:34px}
+.day .dots i{width:6px;height:6px;border-radius:50%;display:block}
+.day.today .dn{background:rgba(255,255,255,.16);border-radius:9px;padding:3px 6px;margin:-3px 0}
+.day.sel{background:#fff;color:var(--ink-3)}
+.day.sel .dn{color:var(--hero);background:none}
+.day:disabled{opacity:.45;cursor:default}
+
+/* ---------- Seções ---------- */
+.sec{display:flex;align-items:baseline;justify-content:space-between;margin:24px 4px 10px}
+.sec h2{font:700 19px var(--f-display);letter-spacing:-.015em;margin:0}
+.sec .aside{font-size:14px;color:var(--ink-3);font-weight:600}
+.sec.late h2,.sec.late .aside{color:var(--late)}
+.filterchip{display:inline-flex;align-items:center;gap:6px;background:var(--surface);border-radius:999px;padding:6px 12px;font-size:13px;font-weight:600;box-shadow:var(--shadow)}
+
+/* ---------- Cartão de cobrança ---------- */
+.ch{background:var(--surface);border-radius:20px;padding:14px;margin-bottom:10px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.ch::before{content:"";position:absolute;left:0;top:14px;bottom:14px;width:4px;border-radius:0 4px 4px 0;background:var(--line)}
+.ch.k-late::before{background:var(--late)}.ch.k-today::before{background:var(--due)}.ch.k-promise::before{background:var(--promise)}.ch.k-paid::before{background:var(--money)}
+.ch-main{display:flex;gap:12px;align-items:center;width:100%;text-align:left}
+.av{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;font:700 15px var(--f-display);color:#fff;flex-shrink:0;letter-spacing:-.02em}
+.av.lg{width:64px;height:64px;border-radius:20px;font-size:23px}
+.av.sm{width:30px;height:30px;border-radius:10px;font-size:12px}
+.ch-who{flex:1;min-width:0}
+.ch-who b{display:block;font-weight:700;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tok{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2);font-weight:500;white-space:nowrap}
+.tok i{width:9px;height:9px;border-radius:3px;display:inline-block;flex-shrink:0}
+.when{display:block;font-size:13px;font-weight:600;margin-top:2px;color:var(--ink-3)}
+.when.late{color:var(--late)}.when.today{color:var(--due)}.when.promise{color:var(--promise)}.when.paid{color:var(--money)}
+.ch-amt{text-align:right;flex-shrink:0}
+.ch-amt b{display:block;font:700 21px/1.1 var(--f-display);letter-spacing:-.02em;white-space:nowrap}
+.ch-amt b.late{color:var(--late)}
+.bar{height:5px;border-radius:5px;background:var(--surface-2);overflow:hidden;width:86px;margin:6px 0 3px auto}
+.bar i{display:block;height:100%;background:var(--money);border-radius:5px}
+.ch-amt small{font-size:12px;color:var(--ink-3);white-space:nowrap}
+.ch-act{display:flex;gap:8px;margin-top:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 16px;border-radius:14px;font-weight:700;font-size:15px;background:var(--surface-2);color:var(--ink);white-space:nowrap}
+.btn svg{width:19px;height:19px;flex-shrink:0}
+.btn.pri{background:var(--ink);color:var(--bg)}
+.btn.wa{background:var(--wa);color:var(--wa-ink)}
+.btn.danger{background:var(--late-soft);color:var(--late)}
+.btn.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.btn.block{width:100%}.btn.grow{flex:1}
+.btn[disabled]{opacity:.55}
+.ch.compact{padding:10px 14px}
+.ch.compact .ch-amt b{font-size:17px;color:var(--money)}
+.ch.compact .av{width:34px;height:34px;border-radius:11px;font-size:13px}
+.ch.dashed{background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.ch.dashed::before{display:none}
+
+/* ---------- Contas ---------- */
+.seg{display:flex;background:var(--surface-2);border-radius:14px;padding:4px;gap:2px;margin-bottom:14px}
+.seg button{flex:1;padding:8px 4px;border-radius:11px;font-weight:600;font-size:14px;color:var(--ink-2);white-space:nowrap}
+.seg button.on{background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+.seg button em{font-style:normal;color:var(--ink-3);font-weight:500;margin-left:3px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{background:var(--surface);border-radius:20px;overflow:hidden;box-shadow:var(--shadow);text-align:left;display:flex;flex-direction:column}
+.tile-band{padding:10px 12px 34px;color:#fff;position:relative}
+.tile-band small{font-weight:700;font-size:12px;opacity:.92}
+.tile-band .plate{position:absolute;left:12px;bottom:-16px;background:var(--surface);color:var(--ink);border-radius:10px;padding:5px 9px;font:800 19px/1 var(--f-display);letter-spacing:.01em;box-shadow:var(--shadow)}
+.tile-body{padding:24px 12px 12px;display:flex;flex-direction:column;gap:6px;flex:1}
+.tile-body .reg{font-size:12px;color:var(--ink-3)}
+.tile-user{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;min-width:0}
+.tile-user span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tile-foot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:4px}
+.st{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.st i{width:6px;height:6px;border-radius:50%;background:currentColor}
+.st.livre{background:var(--money-soft);color:var(--money)}.st.alugada{background:var(--promise-soft);color:var(--promise)}.st.pausada{background:var(--surface-2);color:var(--ink-3)}
+.st.late{background:var(--late-soft);color:var(--late)}.st.due{background:var(--due-soft);color:var(--due)}.st.paid{background:var(--money-soft);color:var(--money)}
+.st.aguardando{background:var(--due-soft);color:var(--due)}.st.recebido{background:var(--promise-soft);color:var(--promise)}.st.repassado{background:var(--money-soft);color:var(--money)}
+.tile.add{border:2px dashed var(--line);background:transparent;box-shadow:none;align-items:center;justify-content:center;min-height:170px;color:var(--ink-3);font-weight:700;gap:8px}
+.tile.add svg{width:28px;height:28px}
+
+/* ---------- Páginas de detalhe ---------- */
+.panel{background:var(--surface);border-radius:22px;padding:16px;box-shadow:var(--shadow);margin-bottom:12px}
+.panel h3{font:700 17px var(--f-display);margin:0 0 12px;letter-spacing:-.01em;display:flex;justify-content:space-between;align-items:baseline}
+.panel h3 small{font:600 13px var(--f-body);color:var(--ink-3)}
+.bandhead{border-radius:26px;padding:18px;color:#fff;margin-bottom:12px;position:relative;overflow:hidden}
+.bandhead .plate-xl{font:800 44px/1 var(--f-display);letter-spacing:-.01em;margin:6px 0 4px}
+.bandhead .meta{opacity:.9;font-size:14px}
+.bandhead .st{background:rgba(255,255,255,.22);color:#fff}
+.rowline{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line);width:100%;text-align:left}
+.rowline:first-of-type{border-top:0}
+.rowline .grow{flex:1;min-width:0}
+.rowline b{font-weight:700}
+.rowline small{display:block;color:var(--ink-3);font-size:13px}
+.rowline .r{text-align:right;white-space:nowrap}
+.kv{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.kv span{display:block;font-size:13px;color:var(--ink-3)}
+.kv b{font:700 18px var(--f-display);letter-spacing:-.01em}
+.timeline{position:relative;padding-left:22px}
+.timeline::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:var(--line);border-radius:2px}
+.tl{position:relative;padding:8px 0}
+.tl::before{content:"";position:absolute;left:-20px;top:13px;width:12px;height:12px;border-radius:50%;background:var(--surface);box-shadow:inset 0 0 0 3px var(--ink-3)}
+.tl.money::before{box-shadow:inset 0 0 0 3px var(--money)}.tl.late::before{box-shadow:inset 0 0 0 3px var(--late)}.tl.now::before{background:var(--promise);box-shadow:none}
+.tl .row1{display:flex;justify-content:space-between;gap:10px;font-weight:600}
+.tl small{color:var(--ink-3);font-size:13px}
+.clienthero{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.clienthero h2{font:700 25px/1.1 var(--f-display);margin:0;letter-spacing:-.02em}
+.clienthero .ph{color:var(--ink-3);font-size:14px}
+.bigbal{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin:2px 0 14px}
+.bigbal span{font-size:13px;color:var(--ink-3)}
+.bigbal b{display:block;font:800 36px/1 var(--f-display);letter-spacing:-.03em}
+.bigbal b.late{color:var(--late)}
+.minis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.mini{background:var(--surface-2);border-radius:14px;padding:10px}
+.mini span{display:block;font-size:12px;color:var(--ink-3);font-weight:600}
+.mini b{font:700 16px var(--f-display);white-space:nowrap}
+.empty{text-align:center;color:var(--ink-3);padding:28px 16px}
+.empty svg{width:44px;height:44px;opacity:.5;margin-bottom:6px}
+.empty b{display:block;color:var(--ink);font:700 17px var(--f-display);margin-bottom:4px}
+.search{display:flex;align-items:center;gap:8px;background:var(--surface);border-radius:14px;padding:0 12px;box-shadow:var(--shadow);margin-bottom:12px}
+.search svg{width:18px;height:18px;color:var(--ink-3)}
+.search input{border:0;background:transparent;box-shadow:none;padding:12px 0;min-height:0}
+.search input:focus{outline:none}
+.crow{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:18px;padding:12px;margin-bottom:8px;box-shadow:var(--shadow);width:100%;text-align:left}
+.crow .grow{flex:1;min-width:0}
+.crow b{display:block;font-weight:700}
+.crow .accs{display:flex;gap:10px;flex-wrap:wrap;margin-top:2px}
+.crow .r{text-align:right}
+.crow .r b{font:700 18px var(--f-display);white-space:nowrap}
+.crow .r b.late{color:var(--late)}
+.crow .r b.ok{color:var(--money);font-size:14px;font-family:var(--f-body)}
+
+/* ---------- Bônus ---------- */
+.split{display:flex;height:12px;border-radius:12px;overflow:hidden;margin:10px 0 6px;background:var(--surface-2)}
+.split i{display:block;height:100%}
+.split .c{background:var(--promise)}.split .m{background:var(--money)}
+.splitlegend{display:flex;justify-content:space-between;font-size:13px;color:var(--ink-2)}
+.splitlegend b{font-family:var(--f-display);color:var(--ink)}
+.steps{display:flex;align-items:center;margin:14px 0 4px}
+.step{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:600;color:var(--ink-3);flex:0 0 auto;width:78px}
+.step i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--ink-3);font-style:normal}
+.step i svg{width:15px;height:15px}
+.step.is-done{color:var(--ink)}.step.is-done i{background:var(--money);color:#fff}
+.step.cur i{background:var(--promise);color:#fff}
+.stepline{flex:1;height:3px;border-radius:3px;background:var(--surface-2);margin-bottom:18px}
+.stepline.is-fill{background:var(--money)}
+.usage{border-radius:14px;padding:10px 12px;font-size:14px;background:var(--surface-2)}
+.usage.warn{background:var(--due-soft);color:var(--ink)}
+.usage.bad{background:var(--late-soft)}
+
+/* ---------- Barra inferior ---------- */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:0 12px calc(10px + var(--safe-b));pointer-events:none}
+.tabbar-in{max-width:520px;margin:0 auto;background:var(--surface);border-radius:24px;box-shadow:0 10px 30px -10px rgba(29,27,51,.35),0 0 0 1px var(--line);display:grid;grid-template-columns:1fr 1fr 72px 1fr 1fr;align-items:center;height:66px;pointer-events:auto}
+.tab{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:700;color:var(--ink-3);padding:6px 0}
+.tab svg{width:23px;height:23px}
+.tab.on{color:var(--ink)}
+.tab .pip{width:4px;height:4px;border-radius:50%;background:transparent;margin-top:1px}
+.tab.on .pip{background:var(--promise)}
+.fab{width:56px;height:56px;border-radius:19px;background:var(--hero);color:#fff;display:grid;place-items:center;margin:-26px auto 0;box-shadow:0 10px 22px -8px rgba(35,31,77,.7);transition:transform .2s}
+.fab svg{width:26px;height:26px}
+.fab:active{transform:scale(.94)}
+
+/* ---------- Folhas (bottom sheets) ---------- */
+.scrim{position:fixed;inset:0;background:rgba(18,16,36,.42);z-index:40;opacity:0;transition:opacity .25s}
+.scrim.on{opacity:1}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;background:var(--bg);border-radius:28px 28px 0 0;padding:8px 16px calc(22px + var(--safe-b));transform:translateY(105%);transition:transform .32s cubic-bezier(.2,.85,.25,1)}
+.sheet.on{transform:none}
+.sheet-in{max-width:560px;margin:0 auto}
+.grab{display:block;width:100%;padding:6px 0 10px}
+.grab i{display:block;width:42px;height:5px;border-radius:5px;background:var(--line);margin:0 auto}
+.sheet h2{font:700 23px/1.15 var(--f-display);letter-spacing:-.02em;margin:0 0 4px}
+.sheet .lead{color:var(--ink-2);margin:0 0 16px;font-size:15px}
+.field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.field>span{font-size:13px;font-weight:700;color:var(--ink-2)}
+.field small{color:var(--ink-3);font-size:12.5px}
+input,select,textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--surface);border:0;border-radius:14px;padding:13px 14px;width:100%;min-height:50px;box-shadow:inset 0 0 0 1.5px var(--line);-webkit-appearance:none;appearance:none}
+input:focus,select:focus,textarea:focus{outline:none;box-shadow:inset 0 0 0 2px var(--promise)}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--ink-3) 50%),linear-gradient(135deg,var(--ink-3) 50%,transparent 50%);background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+textarea{min-height:76px;resize:vertical}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.money-in{display:flex;align-items:baseline;gap:6px;background:var(--surface);border-radius:20px;padding:14px 18px;box-shadow:inset 0 0 0 1.5px var(--line)}
+.money-in:focus-within{box-shadow:inset 0 0 0 2px var(--promise)}
+.money-in span{font:700 22px var(--f-display);color:var(--ink-3)}
+.money-in input{font:800 40px/1 var(--f-display);letter-spacing:-.03em;padding:0;min-height:0;box-shadow:none;background:transparent}
+.money-in input:focus{box-shadow:none}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:9px 14px;border-radius:999px;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--line);font-weight:600;font-size:14px;white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--bg);box-shadow:none}
+.wdpick{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.wdpick button{aspect-ratio:1;border-radius:14px;background:var(--surface);box-shadow:inset 0 0 0 1.5px var(--line);font:700 15px var(--f-display)}
+.wdpick button.on{background:var(--hero);color:#fff;box-shadow:none}
+.pickclients{display:flex;gap:10px;overflow-x:auto;padding:2px 2px 6px;margin:0 -2px}
+.pickclients button{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:12px;font-weight:600;width:64px;flex-shrink:0;color:var(--ink-2)}
+.pickclients button span{max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pickclients button.on .av{box-shadow:0 0 0 3px var(--bg),0 0 0 5.5px var(--promise)}
+.pickclients button.on{color:var(--ink)}
+.pickclients .newc .av{background:var(--surface-2);color:var(--ink-3)}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:14px;color:var(--ink-2);margin-bottom:14px}
+.check input{width:22px;height:22px;min-height:0;padding:0;flex-shrink:0;-webkit-appearance:checkbox;appearance:auto;box-shadow:none;accent-color:var(--promise)}
+.menu{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.menu button{background:var(--surface);border-radius:20px;padding:16px;text-align:left;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;font-weight:700}
+.menu button i{width:42px;height:42px;border-radius:14px;display:grid;place-items:center}
+.menu button i svg{width:22px;height:22px}
+.menu button small{display:block;font-weight:500;color:var(--ink-3);font-size:13px;margin-top:2px}
+
+/* Sucesso do pagamento */
+.done{text-align:center;padding:10px 0 4px}
+.stamp{width:96px;height:96px;margin:6px auto 12px}
+.stamp circle{fill:var(--money);transform-origin:50% 50%;animation:pop .45s cubic-bezier(.2,1.4,.4,1) both}
+.stamp path{fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:draw .45s .3s ease-out forwards}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes draw{to{stroke-dashoffset:0}}
+.done h2{font-size:28px}
+.done .left{font:600 16px var(--f-body);color:var(--ink-2);margin:4px 0 18px}
+.done .left b{color:var(--late)}.done .left b.ok{color:var(--money)}
+.burst{position:absolute;left:50%;top:70px;width:0;height:0;pointer-events:none}
+.burst i{position:absolute;width:8px;height:8px;border-radius:2px;opacity:0;animation:fly .9s .25s ease-out forwards}
+@keyframes fly{0%{opacity:1;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--x),var(--y)) rotate(220deg)}}
+
+.toast{position:fixed;left:50%;bottom:calc(92px + var(--safe-b));transform:translate(-50%,20px);opacity:0;z-index:60;background:var(--ink);color:var(--bg);padding:11px 16px;border-radius:14px;font-weight:600;font-size:14px;max-width:90%;transition:all .25s;text-align:center}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.toast.err{background:var(--late);color:#fff}
+.note{font-size:13px;color:var(--ink-3);margin:6px 4px}
+.linkbtn{color:var(--promise);font-weight:700;font-size:14px;padding:6px 0}
+.linkbtn.danger{color:var(--late)}
+.loading{display:grid;place-items:center;min-height:60vh;color:var(--ink-3);text-align:center;gap:10px}
+.spinner{width:30px;height:30px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--promise);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ---------- Painel ---------- */
+.fleet .hero-top{margin-bottom:14px}
+.occ{font:800 30px/1 var(--f-display);letter-spacing:-.03em;text-align:right}
+.occ small{display:block;font:600 12px var(--f-body);color:var(--hero-mute);letter-spacing:0;margin-top:2px}
+.blocks{display:grid;grid-template-columns:repeat(auto-fill,minmax(58px,1fr));gap:7px}
+.blk{height:40px;border-radius:11px;font:700 11.5px var(--f-display);color:#fff;display:grid;place-items:center;letter-spacing:.01em;animation:blkIn .45s cubic-bezier(.2,1.2,.4,1) both;overflow:hidden;white-space:nowrap;padding:0 4px}
+.blk.livre{background:transparent;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5);color:#fff}
+.blk.pausada{background:repeating-linear-gradient(135deg,rgba(255,255,255,.08) 0 6px,rgba(255,255,255,.16) 6px 12px);color:var(--hero-mute)}
+@keyframes blkIn{from{opacity:0;transform:scale(.6)}to{opacity:1;transform:none}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:13px;font-weight:600;color:var(--hero-mute)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.legend.dark{color:var(--ink-2);margin-top:6px}
+.lg-a{background:#5BE3A8}.lg-l{box-shadow:inset 0 0 0 2px rgba(255,255,255,.6)}.lg-p{background:rgba(255,255,255,.2)}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.kpi{background:var(--surface);border-radius:20px;padding:14px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:2px;text-align:left;min-width:0}
+.kpi span{font-size:13px;color:var(--ink-3);font-weight:600}
+.kpi b{font:800 23px/1.15 var(--f-display);letter-spacing:-.025em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kpi b em{font-style:normal;font-size:15px;color:var(--ink-3);font-weight:600}
+.kpi small{font-size:12.5px;color:var(--ink-3)}
+.kpi.warn{background:var(--due-soft)}.kpi.warn b{color:var(--due)}
+.kpi.bad b{color:var(--late)}.kpi.good b{color:var(--money);font-size:19px}
+.kpi.promise b{color:var(--promise)}
+.bars{width:100%;height:auto;display:block}
+.bars .b-exp{fill:var(--surface-2)}.bars .b-got{fill:var(--money);opacity:.75}.bars .b-cur{fill:var(--money)}
+.bars text{font:600 10px var(--f-body);fill:var(--ink-3);text-anchor:middle}
+.bars .b-lbl.on{fill:var(--ink);font-weight:700}
+.bars .b-val{font:700 11px var(--f-display);fill:var(--ink)}
+.stack{display:flex;height:14px;border-radius:14px;overflow:hidden;margin:2px 0 6px;gap:2px}
+.stack i{display:block;height:100%}
+.sw{width:12px;height:12px;border-radius:4px;flex-shrink:0}
+.meter{height:7px;border-radius:7px;background:var(--surface-2);overflow:hidden;margin:5px 0 3px}
+.meter i{display:block;height:100%;border-radius:7px}
+.plate-sm{color:#fff;font:800 13px var(--f-display);padding:6px 8px;border-radius:9px;min-width:64px;text-align:center;flex-shrink:0}
+.tbl-wrap{overflow-x:auto;margin:0 -16px;padding:0 16px}
+@media (max-width:370px){.ring{width:104px;height:104px}.fig-main b{font-size:25px}.ring-center b{font-size:23px}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01s!important;transition-duration:.01s!important}}
+</style>
+</head>
+<body>
+<main class="wrap" id="app"><div class="loading"><div><div class="spinner" style="margin:0 auto 10px"></div>Carregando…</div></div></main>
+<nav class="tabbar"><div class="tabbar-in" id="tabbar"></div></nav>
+<div class="scrim" id="scrim" hidden></div>
+<section class="sheet" id="sheet" role="dialog" aria-modal="true" hidden><div class="sheet-in" id="sheetIn"></div></section>
+<div class="toast" id="toast" role="status"></div>
+<script>
+(function () {
+'use strict';
+
+/* ================= Ícones ================= */
+var I = {
+  week: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/><circle cx="8" cy="14" r="1.2" fill="currentColor"/><circle cx="12" cy="14" r="1.2" fill="currentColor"/><circle cx="16" cy="14" r="1.2" fill="currentColor"/></svg>',
+  accounts: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8.5 6 4h12l2 4.5"/><rect x="3" y="8.5" width="18" height="11.5" rx="3"/><path d="M9 13h6"/></svg>',
+  people: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.3-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.8a3.3 3.3 0 0 1 0 6.4M18.5 14.8c1.7.7 2.8 2.4 3 5.2"/></svg>',
+  gift: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="8.5" width="17" height="12" rx="2.5"/><path d="M2.5 8.5h19M12 8.5v12M12 8.5C10 4 6 4.5 6.5 7c.3 1.3 3 1.5 5.5 1.5ZM12 8.5c2-4.5 6-4 5.5-1.5-.3 1.3-3 1.5-5.5 1.5Z"/></svg>',
+  plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>',
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 5-7 7 7 7"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 5 7 7-7 7"/></svg>',
+  wa: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.2A9.7 9.7 0 0 0 3.6 16.8L2.3 21.7l5-1.3A9.7 9.7 0 1 0 12 2.2Zm0 17.7a8 8 0 0 1-4.1-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8 8 0 1 1 12 19.9Zm4.4-6c-.2-.1-1.4-.7-1.7-.8-.2-.1-.4-.1-.5.1l-.8 1c-.1.2-.3.2-.5.1a6.5 6.5 0 0 1-3.2-2.8c-.2-.4.2-.4.7-1.3.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.5-.4h-.5a.9.9 0 0 0-.7.3 2.8 2.8 0 0 0-.9 2.1 4.9 4.9 0 0 0 1 2.6 11.2 11.2 0 0 0 4.3 3.8c1.6.7 2.2.7 3 .6a2.6 2.6 0 0 0 1.7-1.2 2.1 2.1 0 0 0 .1-1.2c0-.1-.2-.2-.5-.3Z"/></svg>',
+  cash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="3"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.5v.01M18 14.5v.01"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>',
+  cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="3.5"/><path d="M3 9.5h18M8 3v3M16 3v3"/></svg>',
+  bell: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15Z"/><path d="M10 20.5a2 2 0 0 0 4 0"/></svg>',
+  chart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>',
+  sparkle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/></svg>'
+};
+
+/* ================= Datas (America/Los_Angeles) ================= */
+var TZ = 'America/Los_Angeles';
+var WD = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+var WDS = ['dom','seg','ter','qua','qui','sex','sáb'];
+var WDL = ['D','S','T','Q','Q','S','S'];
+var MON = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+var MONL = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+function todayLA() { var p = {}; new Intl.DateTimeFormat('en-US', {timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit'}).formatToParts(new Date()).forEach(function (x) { p[x.type] = x.value; }); return p.year + '-' + p.month + '-' + p.day; }
+function pd(d) { var a = d.split('-').map(Number); return new Date(Date.UTC(a[0], a[1] - 1, a[2])); }
+function fd(x) { return x.toISOString().slice(0, 10); }
+function validDate(d) { return typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) && fd(pd(d)) === d; }
+function addDays(d, n) { var x = pd(d); x.setUTCDate(x.getUTCDate() + n); return fd(x); }
+function diffDays(a, b) { return Math.round((pd(b) - pd(a)) / 864e5); }
+function wday(d) { return pd(d).getUTCDay(); }
+function weekStart(d) { return addDays(d, -((wday(d) + 6) % 7)); }
+function weekEnd(d) { return addDays(weekStart(d), 6); }
+function nextWdAfter(d, w) { var diff = (w - wday(d) + 7) % 7; return addDays(d, diff === 0 ? 7 : diff); }
+function nextWdFrom(d, w) { var diff = (w - wday(d) + 7) % 7; return addDays(d, diff); }
+function br(d) { return d ? d.slice(8, 10) + '/' + d.slice(5, 7) : ''; }
+function dm(d) { return d ? Number(d.slice(8, 10)) + ' ' + MON[Number(d.slice(5, 7)) - 1] : ''; }
+function dmy(d) { return d ? dm(d) + ' ' + d.slice(0, 4) : ''; }
+function wdm(d) { return d ? WDS[wday(d)] + ', ' + dm(d) : ''; }
+function compact(d) { return d.replace(/-/g, ''); }
+
+/* ================= Dinheiro ================= */
+function parseMoney(v) {
+  var s = String(v == null ? '' : v).trim().replace(/[^\d.,]/g, '');
+  if (!s || !/\d/.test(s)) return null;
+  var i = Math.max(s.lastIndexOf('.'), s.lastIndexOf(',')), ip = s, dp = '';
+  if (i >= 0) { var after = s.slice(i + 1); if (after.length >= 1 && after.length <= 2) { ip = s.slice(0, i); dp = after; } }
+  ip = ip.replace(/[.,]/g, '') || '0';
+  if (!/^\d+$/.test(ip) || !/^\d*$/.test(dp)) return null;
+  return Number(ip) * 100 + Number((dp + '00').slice(0, 2));
+}
+var NF = new Intl.NumberFormat('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+var NF0 = new Intl.NumberFormat('pt-BR', {maximumFractionDigits: 0});
+function money(c) { c = Number(c || 0); return (c < 0 ? '-' : '') + 'US$ ' + NF.format(Math.abs(c) / 100); }
+// Valor curto para títulos: US$ 120 ou US$ 120,50
+function m(c) { c = Number(c || 0); return 'US$ ' + (c % 100 === 0 ? NF0.format(c / 100) : NF.format(c / 100)); }
+function toInput(c) { c = Number(c || 0); return c % 100 === 0 ? String(c / 100) : (c / 100).toFixed(2).replace('.', ','); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (ch) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]; }); }
+function fmtPhone(d) {
+  if (!d) return '';
+  if (d.length === 11 && d[0] === '1') return '+1 (' + d.slice(1, 4) + ') ' + d.slice(4, 7) + '-' + d.slice(7);
+  if (d.slice(0, 2) === '55' && d.length >= 12) return '+55 ' + d.slice(2, 4) + ' ' + d.slice(4, d.length - 4) + '-' + d.slice(-4);
+  return '+' + d;
+}
+
+/* ================= Identidade: cores de cliente e plataforma ================= */
+var AV_COLORS = ['#6E56CF','#DB2777','#0E9F6E','#D9730D','#0B84C6','#C2298A','#3D63DD','#0891B2','#12A594','#7C3AED'];
+function hash(s) { var h = 0; s = String(s || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
+function initials(n) { var p = String(n || '?').trim().split(/\s+/); return ((p[0] || '?')[0] + (p.length > 1 ? p[p.length - 1][0] : '')).toUpperCase(); }
+function avatar(name, id, size) { return '<span class="av ' + (size || '') + '" style="background:' + AV_COLORS[hash(id || name) % AV_COLORS.length] + '">' + esc(initials(name)) + '</span>'; }
+var PLAT = {'grubhub': '#F06A1D', 'amazon flex': '#138FBF', 'doordash': '#E8361E', 'uber eats': '#0A9F5A', 'instacart': '#2E8B3E', 'spark': '#1E5BD8', 'gopuff': '#2F6BFF', 'shipt': '#1F9E6E'};
+function platColor(p) { var k = String(p || '').trim().toLowerCase(); return PLAT[k] || AV_COLORS[hash(k) % AV_COLORS.length]; }
+function tok(platform, label) { return '<span class="tok"><i style="background:' + platColor(platform) + '"></i>' + esc(platform) + ' · ' + esc(label) + '</span>'; }
+
+/* ================= Armazenamento ================= */
+var COLS = ['clients','accounts','rentals','charges','payments','subsidies'];
+var S = {}; COLS.forEach(function (c) { S[c] = new Map(); });
+var mode = null; var db = null; var ready = false; var LS_KEY = 'keyring-v1';
+function lsLoad() { try { var o = JSON.parse(localStorage.getItem(LS_KEY) || '{}'); COLS.forEach(function (c) { S[c] = new Map(Object.entries(o[c] || {})); }); return true; } catch (e) { return false; } }
+function lsSave() { var o = {}; COLS.forEach(function (c) { o[c] = Object.fromEntries(S[c]); }); try { localStorage.setItem(LS_KEY, JSON.stringify(o)); } catch (e) { toast('Não consegui salvar neste aparelho.', true); } }
+async function write(op, col, id, data) {
+  if (op === 'set') S[col].set(id, data);
+  else if (op === 'update') S[col].set(id, Object.assign({}, S[col].get(id) || {}, data));
+  else S[col].delete(id);
+  if (mode === 'local') { lsSave(); schedule(); return; }
+  var ref = db.collection(col).doc(id);
+  var run = function () { return op === 'set' ? ref.set(data) : op === 'update' ? ref.update(data) : ref.delete(); };
+  try { await run(); } catch (e) {
+    if (e && e.code === 'unavailable') { await new Promise(function (r) { setTimeout(r, 500 + Math.random() * 600); }); await run(); return; }
+    throw e;
+  }
+  schedule();
+}
+function list(col) { var out = []; S[col].forEach(function (v, k) { out.push(Object.assign({id: k}, v)); }); return out; }
+function get(col, id) { var v = id ? S[col].get(id) : null; return v ? Object.assign({id: id}, v) : null; }
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+function nowIso() { return new Date().toISOString(); }
+class UErr extends Error {}
+
+/* ================= Regras de negócio ================= */
+var today = todayLA();
+function sortedRates(r) { return (r.rates || []).slice().sort(function (a, b) { return a.effectiveDate < b.effectiveDate ? -1 : 1; }); }
+function rateFor(r, date) { var rs = sortedRates(r), cur = null; rs.forEach(function (x) { if (x.effectiveDate <= date) cur = x; }); return (cur || rs[0] || {}).weeklyCents || null; }
+function currentRate(r) { var rs = sortedRates(r); return rs.length ? rs[rs.length - 1] : {weeklyCents: 0, effectiveDate: ''}; }
+function dueDates(r, limit) { var out = [], d = r.firstDueDate; while (d <= limit) { out.push(d); d = d === r.firstDueDate ? nextWdAfter(d, r.dueWeekday) : addDays(d, 7); } return out; }
+function chargeId(rid, due) { return rid + '-' + compact(due); }
+function paidFor(cid) { var s = 0; S.payments.forEach(function (p) { if (p.chargeId === cid) s += p.amountCents; }); return s; }
+function paymentsFor(cid) { return list('payments').filter(function (p) { return p.chargeId === cid; }).sort(function (a, b) { return (a.paidOn + a.createdAt) < (b.paidOn + b.createdAt) ? -1 : 1; }); }
+function activeRental(aid) { return list('rentals').find(function (r) { return r.accountId === aid && !r.endDate; }) || null; }
+function accountStatus(a) { return activeRental(a.id) ? 'alugada' : a.paused ? 'pausada' : 'livre'; }
+var ACC_LABEL = {livre: 'Livre', alugada: 'Alugada', pausada: 'Pausada'};
+
+function decorate(c) {
+  var cl = get('clients', c.clientId) || {name: 'Cliente removido', phone: ''}, ac = get('accounts', c.accountId) || {platform: '?', label: '?'};
+  var paid = paidFor(c.id), bal = Math.max(c.amountCents - paid, 0), open = !c.cancelledAt && bal > 0, st;
+  if (c.cancelledAt) st = 'cancelada'; else if (bal === 0) st = 'quitada'; else if (c.dueDate < today) st = 'atrasada'; else if (c.dueDate === today) st = 'hoje'; else st = 'avencer';
+  var o = Object.assign({}, c, {clientName: cl.name, clientPhone: cl.phone, platform: ac.platform, accountLabel: ac.label,
+    paidCents: paid, balanceCents: bal, open: open, status: st, partial: open && paid > 0,
+    promiseToday: open && c.promiseDate === today, promiseBroken: !!(open && c.promiseDate && c.promiseDate < today), promiseFuture: !!(open && c.promiseDate && c.promiseDate > today)});
+  o.rank = o.promiseToday ? 0 : st === 'hoje' ? 1 : st === 'atrasada' ? (o.promiseFuture ? 3 : 2) : st === 'avencer' ? 4 : st === 'quitada' ? 5 : 6;
+  return o;
+}
+function sortCh(a) { return a.sort(function (x, y) { return x.rank - y.rank || (x.dueDate < y.dueDate ? -1 : x.dueDate > y.dueDate ? 1 : 0) || x.clientName.localeCompare(y.clientName); }); }
+function allCharges() { return list('charges').map(decorate); }
+function openForClient(cid) { return allCharges().filter(function (c) { return c.clientId === cid && c.open; }).sort(function (a, b) { return a.dueDate < b.dueDate ? -1 : 1; }); }
+function splitSub(s) { var cli = Math.round(s.receivedCents * s.clientBps / 10000); return {clientCents: cli, mineCents: s.receivedCents - cli}; }
+function usageIn(aid, a, b) { return list('rentals').filter(function (r) { return r.accountId === aid && r.startDate <= b && (!r.endDate || r.endDate >= a); }).sort(function (x, y) { return x.startDate < y.startDate ? -1 : 1; }); }
+function subsAll() { return list('subsidies').map(function (s) { var a = get('accounts', s.accountId) || {}, c = get('clients', s.clientId) || {}; return Object.assign(s, {platform: a.platform, accountLabel: a.label, clientName: c.name, clientPhone: c.phone}, splitSub(s)); }).sort(function (a, b) { return a.periodEnd < b.periodEnd ? 1 : -1; }); }
+function projected(ws) {
+  var we = addDays(ws, 6), out = [];
+  if (ws <= weekEnd(today)) return out;
+  list('rentals').forEach(function (r) {
+    if (r.firstDueDate > we || (r.endDate && r.endDate < ws)) return;
+    dueDates(r, r.endDate && r.endDate < we ? r.endDate : we).forEach(function (d) {
+      if (d >= ws) { var cl = get('clients', r.clientId) || {}, ac = get('accounts', r.accountId) || {}; out.push({dueDate: d, amountCents: rateFor(r, d), clientName: cl.name, clientId: r.clientId, platform: ac.platform, accountLabel: ac.label}); }
+    });
+  });
+  return out.sort(function (a, b) { return a.dueDate < b.dueDate ? -1 : 1; });
+}
+
+// Gera as cobranças até o fim da semana atual. O id do documento é vínculo + vencimento:
+// abrir de novo, atualizar ou usar em dois aparelhos nunca cria cobrança repetida.
+var generating = false;
+async function generate() {
+  if (generating || !ready) return;
+  generating = true;
+  try {
+    var horizon = weekEnd(today), todo = [];
+    list('rentals').forEach(function (r) {
+      if (r.firstDueDate > horizon) return;
+      dueDates(r, r.endDate && r.endDate < horizon ? r.endDate : horizon).forEach(function (d) {
+        var id = chargeId(r.id, d);
+        if (!S.charges.has(id)) { var amt = rateFor(r, d); if (amt) todo.push([id, {rentalId: r.id, clientId: r.clientId, accountId: r.accountId, dueDate: d, amountCents: amt, promiseDate: null, promiseNote: '', cancelledAt: null, cancelReason: '', createdAt: nowIso()}]); }
+      });
+    });
+    for (var i = 0; i < todo.length; i++) await write('set', 'charges', todo[i][0], todo[i][1]);
+  } catch (e) { toast('Não consegui gerar as cobranças da semana.', true); }
+  finally { generating = false; }
+}
+
+/* ================= WhatsApp ================= */
+function first(n) { return String(n || '').trim().split(/\s+/)[0] || ''; }
+function accName(c) { return c.platform + ' (' + c.accountLabel + ')'; }
+function waLink(phone, text) { return 'https://wa.me/' + String(phone || '').replace(/\D/g, '') + '?text=' + encodeURIComponent(text); }
+function whenTxt(d) { if (d === today) return 'hoje'; if (d === addDays(today, 1)) return 'amanhã'; return WD[wday(d)] + ', ' + br(d); }
+var WA = {
+  reminder: function (c) {
+    var t = 'Oi, ' + first(c.clientName) + '! Passando para lembrar que a semanalidade da conta ' + accName(c) + ' ';
+    t += c.dueDate < today ? 'venceu em ' + br(c.dueDate) + '.' : 'vence ' + whenTxt(c.dueDate) + '.';
+    t += c.paidCents > 0 ? ' Valor: ' + money(c.amountCents) + ', já recebi ' + money(c.paidCents) + ', falta ' + money(c.balanceCents) + '.' : ' Valor: ' + money(c.balanceCents) + '.';
+    if (c.promiseDate && c.promiseDate >= today) t += ' Combinamos o pagamento para ' + whenTxt(c.promiseDate) + '.';
+    return t + ' Obrigado!';
+  },
+  collect: function (c) {
+    var t = 'Oi, ' + first(c.clientName) + '! Consta em aberto ' + money(c.balanceCents) + ' da conta ' + accName(c) + ', referente ao vencimento de ' + br(c.dueDate);
+    if (c.paidCents > 0) t += ' (semanalidade de ' + money(c.amountCents) + ', você já pagou ' + money(c.paidCents) + ')';
+    t += '.';
+    if (c.promiseDate && c.promiseDate < today) t += ' Tínhamos combinado para ' + br(c.promiseDate) + '.';
+    return t + ' Consegue acertar hoje? Obrigado!';
+  },
+  confirm: function (c, p) {
+    var t = 'Oi, ' + first(c.clientName) + '! Confirmo o recebimento de ' + money(p.amountCents) + ' em ' + br(p.paidOn) + ', referente à conta ' + accName(c) + ' (vencimento ' + br(c.dueDate) + ').';
+    t += c.balanceCents > 0 ? ' Saldo restante dessa semana: ' + money(c.balanceCents) + '.' : ' Essa semana está quitada.';
+    return t + ' Obrigado!';
+  },
+  summary: function (cl, open) {
+    var n = first(cl.name);
+    if (!open.length) return 'Oi, ' + n + '! Está tudo em dia por aqui, nenhuma pendência em aberto. Obrigado!';
+    var line = function (c) { var l = '• ' + accName(c) + ', venc. ' + br(c.dueDate) + ': ' + money(c.balanceCents); if (c.paidCents > 0) l += ' (de ' + money(c.amountCents) + ', pago ' + money(c.paidCents) + ')'; if (c.promiseDate) l += ' · combinado p/ ' + br(c.promiseDate); return l; };
+    var late = open.filter(function (c) { return c.dueDate < today; }), up = open.filter(function (c) { return c.dueDate >= today; });
+    var parts = ['Oi, ' + n + '! Segue o resumo das suas pendências:'];
+    if (late.length) parts.push('\nEm atraso:\n' + late.map(line).join('\n'));
+    if (up.length) parts.push('\nA vencer:\n' + up.map(line).join('\n'));
+    parts.push('\nTotal em aberto: ' + money(open.reduce(function (s, c) { return s + c.balanceCents; }, 0)));
+    parts.push('\nQualquer dúvida, me chama. Obrigado!');
+    return parts.join('\n');
+  },
+  bonus: function (s) {
+    var pct = (s.clientBps / 100).toLocaleString('pt-BR', {maximumFractionDigits: 2});
+    var t = 'Oi, ' + first(s.clientName) + '! Sobre o bônus da conta ' + accName(s) + ' no período de ' + br(s.periodStart) + ' a ' + br(s.periodEnd) + ': ';
+    if (s.status === 'aguardando') t += 'ainda estou aguardando a plataforma liberar. Quando cair, sua parte é ' + pct + '% do valor e eu te aviso.';
+    else { t += 'a plataforma pagou ' + money(s.receivedCents) + '. Sua parte (' + pct + '%) é ' + money(s.clientCents) + '.'; t += s.status === 'repassado' ? ' Já fiz o repasse' + (s.passedOn ? ' em ' + br(s.passedOn) : '') + '.' : ' Vou fazer o repasse em breve.'; }
+    return t + ' Obrigado!';
+  }
+};
+function waA(phone, text, label, cls) { return '<a class="btn wa ' + (cls || '') + '" target="_blank" rel="noopener" href="' + esc(waLink(phone, text)) + '">' + I.wa + (label ? '<span>' + esc(label) + '</span>' : '') + '</a>'; }
+
+/* ================= Interface: utilidades ================= */
+var app = document.getElementById('app'), sheetEl = document.getElementById('sheet'), sheetIn = document.getElementById('sheetIn'), scrim = document.getElementById('scrim');
+var view = {tab: 'semana', w: weekStart(today), day: null}; var stack = []; var sheet = null; var renderPending = false; var animateRing = true;
+var toastT;
+function toast(msg, err) { var t = document.getElementById('toast'); t.textContent = msg; t.className = 'toast on' + (err ? ' err' : ''); clearTimeout(toastT); toastT = setTimeout(function () { t.className = 'toast' + (err ? ' err' : ''); }, err ? 4200 : 2400); }
+function schedule() { if (renderPending) return; renderPending = true; requestAnimationFrame(function () { renderPending = false; render(); if (sheet && sheet.live && !sheet.dirty) paintSheet(); }); }
+function go(v) { stack.push(view); view = v; animateRing = true; render(); window.scrollTo(0, 0); }
+function back() { view = stack.pop() || {tab: 'semana', w: weekStart(today)}; render(); }
+function tab(t) { stack = []; view = {tab: t}; if (t === 'semana') { view.w = weekStart(today); animateRing = true; } closeSheet(); render(); window.scrollTo(0, 0); try { history.replaceState(null, '', '#' + t); } catch (e) {} }
+function backBtn() { return stack.length ? '<button class="backbtn" data-act="back" aria-label="Voltar">' + I.left + '</button>' : ''; }
+
+function openSheet(fn, opts) { sheet = Object.assign({fn: fn, dirty: false}, opts || {}); scrim.hidden = false; sheetEl.hidden = false; paintSheet(); requestAnimationFrame(function () { scrim.classList.add('on'); sheetEl.classList.add('on'); }); sheetEl.scrollTop = 0; }
+function paintSheet() { if (!sheet) return; try { sheetIn.innerHTML = '<button class="grab" data-act="closeSheet" aria-label="Fechar"><i></i></button>' + sheet.fn(); } catch (e) { console.error(e); closeSheet(); return; } if (sheet.after) sheet.after(); }
+function closeSheet() { if (!sheet) return; sheet = null; scrim.classList.remove('on'); sheetEl.classList.remove('on'); setTimeout(function () { if (!sheet) { scrim.hidden = true; sheetEl.hidden = true; sheetIn.innerHTML = ''; } }, 300); }
+function ask(msg, okLabel, danger) {
+  return new Promise(function (res) {
+    var prev = sheet;
+    openSheet(function () { return '<h2>' + esc(msg) + '</h2><p class="lead">Essa ação fica registrada.</p><div style="display:flex;flex-direction:column;gap:8px"><button class="btn block ' + (danger ? 'danger' : 'pri') + '" data-ask="1">' + esc(okLabel) + '</button><button class="btn block ghost" data-ask="0">Voltar</button></div>'; });
+    sheet.resolve = function (v) { res(v); if (prev) { sheet = prev; paintSheet(); } else closeSheet(); };
+  });
+}
+function fd2(form) { var o = {}; new FormData(form).forEach(function (v, k) { o[k] = typeof v === 'string' ? v : ''; }); return o; }
+function phoneDigits(raw) { var d = String(raw || '').replace(/\D/g, ''); if (d.length === 10) d = '1' + d; if (d.length < 11 || d.length > 15) throw new UErr('Coloque o telefone com código do país, ex.: +1 555 123 4567.'); return d; }
+function needDate(d, msg) { if (!validDate(d)) throw new UErr(msg); return d; }
+function emptyState(icon, title, text, btn) { return '<div class="empty">' + icon + '<b>' + esc(title) + '</b><div>' + esc(text) + '</div>' + (btn || '') + '</div>'; }
+
+/* ================= Tabbar ================= */
+function paintTabbar() {
+  var cur = view.tab;
+  var t = function (k, icon, label) { return '<button class="tab ' + (cur === k ? 'on' : '') + '" data-act="tab" data-v="' + k + '">' + icon + '<span>' + label + '</span><span class="pip"></span></button>'; };
+  document.getElementById('tabbar').innerHTML = t('semana', I.week, 'Semana') + t('contas', I.accounts, 'Contas') + '<button class="fab" data-act="fab" aria-label="Adicionar">' + I.plus + '</button>' + t('clientes', I.people, 'Clientes') + t('painel', I.chart, 'Painel');
+}
+
+/* ================= Render principal ================= */
+function render() {
+  if (!ready) return;
+  today = todayLA();
+  var h;
+  try {
+    if (view.page === 'conta') h = P.conta(); else if (view.page === 'cliente') h = P.cliente(); else if (view.page === 'bonus') h = P.bonusDetail(); else if (view.page === 'bonusList') h = P.bonus(); else h = P[view.tab]();
+  } catch (e) { console.error(e); h = emptyState(I.sparkle, 'Registro não encontrado', 'Ele pode ter sido removido em outro aparelho.', '<p><button class="btn pri" data-act="tab" data-v="semana">Ir para a semana</button></p>'); }
+  app.innerHTML = h;
+  paintTabbar();
+  if (view.after) { var f = view.after; view.after = null; f(); }
+}
+
+/* ---------- Cartão de cobrança ---------- */
+function whenLine(c) {
+  if (c.cancelledAt) return ['', 'Cancelada'];
+  if (c.status === 'quitada') return ['paid', 'Quitada'];
+  if (c.promiseToday) return ['promise', 'Prometeu pagar hoje'];
+  var d = diffDays(today, c.dueDate), txt;
+  if (d === 0) txt = 'Vence hoje'; else if (d === 1) txt = 'Vence amanhã'; else if (d > 1) txt = 'Vence ' + wdm(c.dueDate); else if (d === -1) txt = 'Venceu ontem'; else txt = 'Venceu há ' + (-d) + ' dias';
+  if (c.promiseFuture) return ['promise', txt + ' · combinado ' + WDS[wday(c.promiseDate)]];
+  if (c.promiseBroken) return ['late', txt + ' · promessa furada'];
+  return [d < 0 ? 'late' : d === 0 ? 'today' : '', txt];
+}
+function kind(c) { return c.status === 'quitada' ? 'k-paid' : c.promiseToday ? 'k-promise' : c.status === 'atrasada' ? 'k-late' : c.status === 'hoje' ? 'k-today' : ''; }
+function card(c) {
+  var w = whenLine(c);
+  if (!c.open) {
+    return '<div class="ch compact ' + kind(c) + '"><button class="ch-main" data-act="charge" data-id="' + esc(c.id) + '">' + avatar(c.clientName, c.clientId) + '<div class="ch-who"><b>' + esc(c.clientName) + '</b>' + tok(c.platform, c.accountLabel) + '</div><div class="ch-amt"><b class="num">' + m(c.amountCents) + '</b><small class="when ' + w[0] + '">' + w[1] + '</small></div></button></div>';
+  }
+  var pct = c.amountCents ? Math.round(c.paidCents / c.amountCents * 100) : 0;
+  var collect = c.dueDate < today || c.partial;
+  return '<div class="ch ' + kind(c) + '"><button class="ch-main" data-act="charge" data-id="' + esc(c.id) + '">' + avatar(c.clientName, c.clientId) +
+    '<div class="ch-who"><b>' + esc(c.clientName) + '</b>' + tok(c.platform, c.accountLabel) + '<span class="when ' + w[0] + '">' + w[1] + '</span></div>' +
+    '<div class="ch-amt"><b class="num ' + (c.status === 'atrasada' ? 'late' : '') + '">' + m(c.balanceCents) + '</b>' + (c.paidCents > 0 ? '<div class="bar"><i style="width:' + pct + '%"></i></div><small>' + m(c.paidCents) + ' de ' + m(c.amountCents) + '</small>' : '<small>' + (c.status === 'atrasada' ? 'em aberto' : 'semanal') + '</small>') + '</div></button>' +
+    '<div class="ch-act"><button class="btn pri grow" data-act="pay" data-id="' + esc(c.id) + '">' + I.cash + '<span>Recebi</span></button>' + waA(c.clientPhone, collect ? WA.collect(c) : WA.reminder(c), collect ? 'Cobrar' : 'Lembrar', 'grow') + '</div></div>';
+}
+
+/* ---------- Telas ---------- */
+var P = {};
+P.semana = function () {
+  var w = view.w || weekStart(today), we = addDays(w, 6), cur = weekStart(today), future = w > cur;
+  var all = allCharges();
+  var wk = all.filter(function (c) { return c.dueDate >= w && c.dueDate <= we && !c.cancelledAt; });
+  var exp = wk.reduce(function (s, c) { return s + c.amountCents; }, 0), paid = wk.reduce(function (s, c) { return s + Math.min(c.paidCents, c.amountCents); }, 0), pend = exp - paid;
+  var late = sortCh(all.filter(function (c) { return c.dueDate < w && c.open; })), lateT = late.reduce(function (s, c) { return s + c.balanceCents; }, 0);
+  var proj = future ? projected(w) : [];
+  if (future) exp = proj.reduce(function (s, p) { return s + (p.amountCents || 0); }, 0);
+  var pct = exp ? paid / exp : 0, R = 52, C = 2 * Math.PI * R;
+  var lateInWeek = wk.filter(function (c) { return c.status === 'atrasada'; }).reduce(function (s, c) { return s + c.balanceCents; }, 0);
+  var dateLabel = WD[wday(today)] + ', ' + Number(today.slice(8)) + ' de ' + MONL[Number(today.slice(5, 7)) - 1];
+  var h = '<div class="pagehead"><h1><span class="sub">' + dateLabel.charAt(0).toUpperCase() + dateLabel.slice(1) + '</span>Semana</h1><button class="iconbtn" data-act="settings" aria-label="Ajustes e backup">' + I.gear + '</button></div>';
+  h += '<section class="hero"><div class="hero-top"><span class="hero-range"><b>' + dm(w) + ' – ' + dm(we) + '</b>' + (w === cur ? ' · esta semana' : future ? ' · prevista' : '') + '</span><div class="hero-nav"><button data-act="week" data-v="' + addDays(w, -7) + '" aria-label="Semana anterior">' + I.left + '</button><button data-act="week" data-v="' + addDays(w, 7) + '" aria-label="Próxima semana">' + I.right + '</button></div></div>';
+  var startOff = animateRing ? C : C * (1 - pct);
+  h += '<div class="hero-body"><div class="ring"><svg viewBox="0 0 124 124"><circle class="track" cx="62" cy="62" r="' + R + '" fill="none" stroke-width="12"/><circle class="fill" id="ringFill" cx="62" cy="62" r="' + R + '" fill="none" stroke-width="12" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + startOff.toFixed(1) + '" data-target="' + (C * (1 - pct)).toFixed(1) + '"/></svg><div class="ring-center"><div><b>' + (future ? '—' : Math.round(pct * 100) + '%') + '</b><small>' + (future ? 'previsto' : 'recebido') + '</small></div></div></div>';
+  h += '<div class="hero-figs">';
+  if (future) h += '<div class="fig-main"><span>Previsto</span><b>' + m(exp) + '</b><i>' + proj.length + ' cobrança' + (proj.length === 1 ? '' : 's') + '</i></div>';
+  else {
+    h += '<div class="fig-main"><span>Recebido</span><b>' + m(paid) + '</b><i>de ' + m(exp) + ' previstos</i></div><div class="fig-pills">';
+    h += '<span class="fpill"><span class="d" style="background:#FFC857"></span>Falta ' + m(pend) + '</span>';
+    if (lateT) h += '<button class="fpill" data-act="scrollLate"><span class="d" style="background:#FF8A8D"></span>Atrasado ' + m(lateT) + '</button>';
+    h += '</div>';
+  }
+  h += '</div></div>';
+  // Faixa dos 7 dias
+  h += '<div class="days">';
+  for (var i = 0; i < 7; i++) {
+    var d = addDays(w, i), items = future ? proj.filter(function (p) { return p.dueDate === d; }) : wk.filter(function (c) { return c.dueDate === d; });
+    var dots = items.slice(0, 6).map(function (c) {
+      if (future) return '<i style="background:rgba(255,255,255,.45)"></i>';
+      var col = c.status === 'quitada' ? '#5BE3A8' : c.status === 'atrasada' ? '#FF8A8D' : c.promiseToday ? '#B9A6FF' : c.status === 'hoje' || c.partial ? '#FFC857' : 'rgba(255,255,255,.5)';
+      return '<i style="background:' + col + '"></i>';
+    }).join('');
+    h += '<button class="day ' + (d === today ? 'today ' : '') + (view.day === d ? 'sel' : '') + '" data-act="day" data-v="' + d + '"' + (items.length || view.day === d ? '' : ' disabled') + '><span class="wd">' + WDL[wday(d)] + '</span><span class="dn">' + Number(d.slice(8)) + '</span><span class="dots">' + dots + '</span></button>';
+  }
+  h += '</div></section>';
+  if (w !== cur) h += '<p style="text-align:center;margin:12px 0 0"><button class="filterchip" data-act="week" data-v="' + cur + '">Voltar para esta semana</button></p>';
+  view.after = function () { var f = document.getElementById('ringFill'); if (f && animateRing) { animateRing = false; requestAnimationFrame(function () { requestAnimationFrame(function () { f.style.strokeDashoffset = f.getAttribute('data-target'); }); }); } };
+
+  if (future) {
+    h += '<div class="sec"><h2>Previstas</h2><span class="aside">ainda não lançadas</span></div>';
+    var pf = view.day ? proj.filter(function (p) { return p.dueDate === view.day; }) : proj;
+    pf.forEach(function (p) { h += '<div class="ch dashed"><div class="ch-main">' + avatar(p.clientName, p.clientId) + '<div class="ch-who"><b>' + esc(p.clientName) + '</b>' + tok(p.platform, p.accountLabel) + '<span class="when">Vence ' + wdm(p.dueDate) + '</span></div><div class="ch-amt"><b class="num">' + m(p.amountCents) + '</b><small>prevista</small></div></div></div>'; });
+    if (!pf.length) h += emptyState(I.cal, 'Nada previsto', 'Nenhum vínculo ativo vence nesta semana.');
+    return h;
+  }
+  if (late.length && !view.day) {
+    h += '<div class="sec late" id="lateSec"><h2>Atrasadas antes desta semana</h2><span class="aside num">' + m(lateT) + '</span></div><p class="note" style="margin-top:-6px">Não entram no total desta semana.</p>';
+    late.forEach(function (c) { h += card(c); });
+  }
+  var shown = view.day ? wk.filter(function (c) { return c.dueDate === view.day; }) : wk;
+  h += '<div class="sec"><h2>' + (view.day ? wdm(view.day).replace(/^./, function (x) { return x.toUpperCase(); }) : 'Desta semana') + '</h2>' + (view.day ? '<button class="filterchip" data-act="day" data-v="' + view.day + '">Ver semana toda</button>' : '<span class="aside">' + wk.filter(function (c) { return c.open; }).length + ' em aberto</span>') + '</div>';
+  var openOnes = sortCh(shown.filter(function (c) { return c.open; })), doneOnes = sortCh(shown.filter(function (c) { return !c.open; }));
+  openOnes.forEach(function (c) { h += card(c); });
+  if (doneOnes.length) { if (openOnes.length) h += '<p class="note">Quitadas</p>'; doneOnes.forEach(function (c) { h += card(c); }); }
+  if (!shown.length) {
+    if (!list('accounts').length) h += emptyState(I.accounts, 'Comece pelas suas contas', 'Cadastre uma conta e um cliente, e vincule os dois. A cobrança da semana aparece aqui.', '<p><button class="btn pri" data-act="newAccount">' + I.plus + '<span>Cadastrar conta</span></button></p>');
+    else if (!list('rentals').filter(function (r) { return !r.endDate; }).length) h += emptyState(I.accounts, 'Nenhuma conta alugada', 'Abra uma conta livre e escolha o cliente para gerar as cobranças.', '<p><button class="btn pri" data-act="tab" data-v="contas">Ver contas</button></p>');
+    else h += emptyState(I.check, 'Nada vence nesta semana', 'As próximas cobranças aparecem quando a semana chegar.');
+  }
+  var canc = all.filter(function (c) { return c.dueDate >= w && c.dueDate <= we && c.cancelledAt; });
+  if (canc.length) { h += '<p class="note">Canceladas</p>'; canc.forEach(function (c) { h += card(c); }); }
+  return h;
+};
+
+P.contas = function () {
+  var f = view.filter || '', all = list('accounts').map(function (a) { a.status = accountStatus(a); a.rental = activeRental(a.id); return a; }).sort(function (a, b) { return (a.platform + a.label).localeCompare(b.platform + b.label); });
+  var n = {livre: 0, alugada: 0, pausada: 0}; all.forEach(function (a) { n[a.status]++; });
+  var weekly = all.reduce(function (s, a) { return s + (a.rental ? currentRate(a.rental).weeklyCents : 0); }, 0);
+  var h = '<div class="pagehead"><h1><span class="sub">' + n.alugada + ' de ' + all.length + ' alugadas · ' + m(weekly) + '/semana</span>Contas</h1><button class="iconbtn" data-act="newAccount" aria-label="Nova conta">' + I.plus + '</button></div>';
+  var b = function (k, l) { return '<button class="' + (f === k ? 'on' : '') + '" data-act="accFilter" data-v="' + k + '">' + l + '<em>' + (k ? n[k] : all.length) + '</em></button>'; };
+  h += '<div class="seg">' + b('', 'Todas') + b('livre', 'Livres') + b('alugada', 'Alugadas') + b('pausada', 'Pausadas') + '</div>';
+  var shown = all.filter(function (a) { return !f || a.status === f; });
+  h += '<div class="grid">';
+  shown.forEach(function (a) {
+    var cl = a.rental ? get('clients', a.rental.clientId) : null;
+    h += '<button class="tile" data-act="account" data-id="' + esc(a.id) + '"><div class="tile-band" style="background:' + platColor(a.platform) + '"><small>' + esc(a.platform) + '</small><span class="plate">' + esc(a.label) + '</span></div><div class="tile-body"><span class="reg">' + esc(a.region || 'Sem região') + '</span>';
+    if (cl) h += '<div class="tile-user">' + avatar(cl.name, cl.id, 'sm') + '<span>' + esc(cl.name) + '</span></div>';
+    else h += '<div class="tile-user" style="color:var(--ink-3)">' + (a.status === 'pausada' ? 'Fora de uso' : 'Pronta para alugar') + '</div>';
+    h += '<div class="tile-foot"><span class="st ' + a.status + '"><i></i>' + ACC_LABEL[a.status] + '</span>' + (a.rental ? '<b class="num" style="font-size:15px">' + m(currentRate(a.rental).weeklyCents) + '</b>' : '') + '</div></div></button>';
+  });
+  if (!f || f === 'livre') h += '<button class="tile add" data-act="newAccount">' + I.plus + 'Nova conta</button>';
+  h += '</div>';
+  if (!shown.length && f) h += emptyState(I.accounts, 'Nenhuma conta ' + ACC_LABEL[f].toLowerCase(), 'Troque o filtro para ver as outras.');
+  return h;
+};
+
+P.conta = function () {
+  var a = get('accounts', view.id); if (!a) throw new Error('nf');
+  var st = accountStatus(a), act = activeRental(a.id), col = platColor(a.platform), h = '';
+  h += '<div class="pagehead">' + backBtn() + '<h1 style="font-size:22px">Conta</h1><button class="iconbtn" data-act="editAccount" data-id="' + esc(a.id) + '" aria-label="Editar conta"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg></button></div>';
+  h += '<section class="bandhead" style="background:' + col + '"><span class="st"><i></i>' + ACC_LABEL[st] + '</span><div class="plate-xl">' + esc(a.label) + '</div><div class="meta">' + esc(a.platform) + (a.region ? ' · ' + esc(a.region) : '') + '</div></section>';
+  if (a.notes) h += '<div class="panel" style="white-space:pre-wrap;font-size:15px;color:var(--ink-2)">' + esc(a.notes) + '</div>';
+  if (act) {
+    var cl = get('clients', act.clientId) || {name: '?'}, rate = currentRate(act), rs = sortedRates(act);
+    h += '<section class="panel"><h3>Alugada para</h3><button class="rowline" data-act="client" data-id="' + esc(act.clientId) + '">' + avatar(cl.name, cl.id) + '<div class="grow"><b>' + esc(cl.name) + '</b><small>desde ' + dmy(act.startDate) + '</small></div>' + I.right.replace('<svg', '<svg width="18" height="18" style="color:var(--ink-3)"') + '</button>';
+    h += '<div class="kv" style="margin-top:12px"><div><span>Semanal</span><b class="num">' + m(rate.weeklyCents) + '</b>' + (rate.effectiveDate > today ? '<small class="note" style="margin:0;display:block">a partir de ' + dm(rate.effectiveDate) + '</small>' : '') + '</div><div><span>Vencimento</span><b>toda ' + WD[act.dueWeekday] + '</b></div></div>';
+    if (rs.length > 1) h += '<p class="note" style="margin:12px 0 0">Reajustes: ' + rs.map(function (r) { return m(r.weeklyCents) + ' desde ' + dm(r.effectiveDate); }).join(' → ') + '</p>';
+    h += '<div style="display:flex;gap:8px;margin-top:14px"><button class="btn grow" data-act="adjust" data-id="' + esc(act.id) + '">Reajustar</button><button class="btn grow danger" data-act="endRental" data-id="' + esc(act.id) + '">Encerrar / trocar</button></div></section>';
+  } else if (a.paused) {
+    h += '<section class="panel">' + emptyState(I.accounts, 'Conta pausada', 'Reative quando quiser alugar de novo.', '<p><button class="btn pri" data-act="pause" data-id="' + esc(a.id) + '">Reativar conta</button></p>') + '</section>';
+  } else {
+    h += '<section class="panel"><h3>Alugar esta conta</h3>' + rentalForm(a) + '</section>';
+  }
+  var rs2 = list('rentals').filter(function (r) { return r.accountId === a.id; }).sort(function (x, y) { return x.startDate < y.startDate ? 1 : -1; });
+  if (rs2.length) {
+    h += '<section class="panel"><h3>Quem já usou <small>' + rs2.length + '</small></h3><div class="timeline">';
+    rs2.forEach(function (r) { var c = get('clients', r.clientId) || {name: '?'}; h += '<div class="tl ' + (r.endDate ? '' : 'now') + '"><button class="row1" style="width:100%" data-act="client" data-id="' + esc(r.clientId) + '"><span>' + esc(c.name) + '</span><span class="num">' + sortedRates(r).map(function (x) { return m(x.weeklyCents); }).join(' → ') + '</span></button><small>' + dmy(r.startDate) + ' → ' + (r.endDate ? dmy(r.endDate) : 'agora') + '</small></div>'; });
+    h += '</div></section>';
+  }
+  var subs = subsAll().filter(function (s) { return s.accountId === a.id; });
+  h += '<section class="panel"><h3>Bônus da conta <button class="linkbtn" data-act="newSub" data-account="' + esc(a.id) + '">+ Registrar</button></h3>';
+  if (!subs.length) h += '<p class="note" style="margin:0">Nenhum bônus registrado.</p>';
+  subs.forEach(function (s) { h += '<button class="rowline" data-act="bonus" data-id="' + esc(s.id) + '"><div class="grow"><b>' + dm(s.periodStart) + ' – ' + dm(s.periodEnd) + '</b><small>' + esc(s.clientName) + '</small></div><span class="st ' + s.status + '">' + SUBL[s.status] + '</span></button>'; });
+  h += '</section>';
+  if (!act) h += '<p style="text-align:center"><button class="linkbtn" data-act="pause" data-id="' + esc(a.id) + '">' + (a.paused ? '' : 'Pausar esta conta') + '</button></p>';
+  return h;
+};
+
+function rentalForm(a) {
+  var cls = list('clients').sort(function (x, y) { return x.name.localeCompare(y.name); });
+  var pre = view.preClient || '';
+  var h = '<form data-form="rental" data-id="' + esc(a.id) + '"><div class="field"><span>Cliente</span><div class="pickclients">';
+  cls.forEach(function (c) { h += '<button type="button" class="' + (pre === c.id ? 'on' : '') + '" data-pick="' + esc(c.id) + '">' + avatar(c.name, c.id) + '<span>' + esc(first(c.name)) + '</span></button>'; });
+  h += '<button type="button" class="newc" data-act="newClientFor" data-id="' + esc(a.id) + '"><span class="av">' + I.plus.replace('<svg', '<svg width="20" height="20"') + '</span><span>Novo</span></button></div><input type="hidden" name="clientId" value="' + esc(pre) + '"></div>';
+  h += '<div class="field"><span>Valor semanal</span><div class="money-in"><span>US$</span><input name="weekly" inputmode="decimal" placeholder="120" required autocomplete="off"></div></div>';
+  h += '<div class="field"><span>Dia do vencimento</span><div class="wdpick">' + [1,2,3,4,5,6,0].map(function (i) { return '<button type="button" data-wd="' + i + '" class="' + (i === wday(today) ? 'on' : '') + '" aria-label="' + WD[i] + '">' + WDL[i] + '</button>'; }).join('') + '</div><input type="hidden" name="dueWeekday" value="' + wday(today) + '"></div>';
+  h += '<div class="two"><label class="field"><span>Início do uso</span><input type="date" name="startDate" value="' + today + '" required></label><label class="field"><span>1ª cobrança</span><input type="date" name="firstDueDate" value="' + today + '" required></label></div>';
+  h += '<p class="note" style="margin:-6px 2px 14px">Depois da primeira, as cobranças vencem toda semana no dia escolhido.</p><button class="btn pri block">Alugar e gerar cobrança</button></form>';
+  return h;
+}
+
+P.clientes = function () {
+  var q = (view.q || '').toLowerCase();
+  var cls = list('clients').map(function (c) { var o = openForClient(c.id); c.open = o; c.balance = o.reduce(function (s, x) { return s + x.balanceCents; }, 0); c.late = o.some(function (x) { return x.dueDate < today; });
+    c.accs = list('rentals').filter(function (r) { return r.clientId === c.id && !r.endDate; }).map(function (r) { return get('accounts', r.accountId) || {}; }); return c; })
+    .sort(function (a, b) { return b.balance - a.balance || a.name.localeCompare(b.name); });
+  var owed = cls.reduce(function (s, c) { return s + c.balance; }, 0);
+  var h = '<div class="pagehead"><h1><span class="sub">' + cls.length + ' cliente' + (cls.length === 1 ? '' : 's') + ' · ' + m(owed) + ' em aberto</span>Clientes</h1><button class="iconbtn" data-act="newClient" aria-label="Novo cliente">' + I.plus + '</button></div>';
+  if (cls.length > 4) h += '<label class="search">' + I.search + '<input data-search placeholder="Buscar cliente" value="' + esc(view.q || '') + '"></label>';
+  var shown = cls.filter(function (c) { return !q || c.name.toLowerCase().indexOf(q) >= 0; });
+  shown.forEach(function (c) {
+    h += '<button class="crow" data-act="client" data-id="' + esc(c.id) + '">' + avatar(c.name, c.id) + '<div class="grow"><b>' + esc(c.name) + '</b><div class="accs">' + (c.accs.length ? c.accs.map(function (a) { return tok(a.platform, a.label); }).join('') : '<span class="tok">Sem conta agora</span>') + '</div></div><div class="r">' + (c.balance ? '<b class="num ' + (c.late ? 'late' : '') + '">' + m(c.balance) + '</b><span class="st ' + (c.late ? 'late' : 'due') + '">' + (c.late ? 'Atrasado' : 'Em aberto') + '</span>' : '<b class="ok">Em dia</b>') + '</div></button>';
+  });
+  if (!cls.length) h += emptyState(I.people, 'Nenhum cliente ainda', 'Cadastre nome e WhatsApp com código do país.', '<p><button class="btn pri" data-act="newClient">' + I.plus + '<span>Novo cliente</span></button></p>');
+  return h;
+};
+
+P.cliente = function () {
+  var c = get('clients', view.id); if (!c) throw new Error('nf');
+  var open = openForClient(c.id), bal = open.reduce(function (s, x) { return s + x.balanceCents; }, 0), late = open.some(function (x) { return x.dueDate < today; });
+  var chs = allCharges().filter(function (x) { return x.clientId === c.id; });
+  var ids = {}; chs.forEach(function (x) { ids[x.id] = x; });
+  var pays = list('payments').filter(function (p) { return ids[p.chargeId]; });
+  var totalPaid = pays.reduce(function (s, p) { return s + p.amountCents; }, 0);
+  var rs = list('rentals').filter(function (r) { return r.clientId === c.id; }).sort(function (a, b) { return (!a.endDate) !== (!b.endDate) ? (!a.endDate ? -1 : 1) : (a.startDate < b.startDate ? 1 : -1); });
+  var activeN = rs.filter(function (r) { return !r.endDate; }).length;
+  var h = '<div class="pagehead">' + backBtn() + '<h1 style="font-size:22px">Cliente</h1><button class="iconbtn" data-act="editClient" data-id="' + esc(c.id) + '" aria-label="Editar cliente"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg></button></div>';
+  h += '<section class="panel"><div class="clienthero">' + avatar(c.name, c.id, 'lg') + '<div><h2>' + esc(c.name) + '</h2><div class="ph">' + esc(fmtPhone(c.phone)) + '</div></div></div>';
+  h += '<div class="bigbal"><div><span>Em aberto</span><b class="num ' + (late ? 'late' : '') + '">' + m(bal) + '</b></div>' + (bal ? '<span class="st ' + (late ? 'late' : 'due') + '">' + open.length + ' pendência' + (open.length === 1 ? '' : 's') + '</span>' : '<span class="st paid">Em dia</span>') + '</div>';
+  h += waA(c.phone, WA.summary(c, open), bal ? 'Mandar resumo das pendências' : 'Avisar que está tudo em dia', 'block');
+  h += '<div class="minis"><div class="mini"><span>Contas agora</span><b>' + activeN + '</b></div><div class="mini"><span>Já pagou</span><b class="num">' + m(totalPaid) + '</b></div><div class="mini"><span>Cobranças</span><b>' + chs.filter(function (x) { return !x.cancelledAt; }).length + '</b></div></div>';
+  if (c.notes) h += '<p style="white-space:pre-wrap;color:var(--ink-2);font-size:14px;margin:12px 0 0">' + esc(c.notes) + '</p>';
+  h += '</section>';
+  if (open.length) { h += '<div class="sec"><h2>Pendências</h2><span class="aside num">' + m(bal) + '</span></div>'; open.forEach(function (x) { h += card(x); }); }
+  var prom = open.filter(function (x) { return x.promiseDate; });
+  if (prom.length) { h += '<section class="panel"><h3>Promessas</h3>'; prom.forEach(function (x) { h += '<button class="rowline" data-act="charge" data-id="' + esc(x.id) + '"><div class="grow"><b style="color:' + (x.promiseBroken ? 'var(--late)' : 'var(--promise)') + '">' + wdm(x.promiseDate) + (x.promiseBroken ? ' · não pagou' : '') + '</b><small>' + esc(x.platform + ' ' + x.accountLabel) + ' · venc. ' + dm(x.dueDate) + (x.promiseNote ? ' · ' + esc(x.promiseNote) : '') + '</small></div><b class="r num">' + m(x.balanceCents) + '</b></button>'; }); h += '</section>'; }
+  h += '<section class="panel"><h3>Contas</h3>';
+  if (!rs.length) h += '<p class="note" style="margin:0">Nenhuma conta vinculada ainda.</p>';
+  rs.forEach(function (r) { var a = get('accounts', r.accountId) || {}; h += '<button class="rowline" data-act="account" data-id="' + esc(r.accountId) + '"><span class="av sm" style="background:' + platColor(a.platform) + '">' + esc((a.platform || '?')[0]) + '</span><div class="grow"><b>' + esc(a.platform) + ' · ' + esc(a.label) + '</b><small>' + (r.endDate ? dm(r.startDate) + ' → ' + dm(r.endDate) : 'desde ' + dm(r.startDate) + ' · vence ' + WDS[r.dueWeekday]) + '</small></div><span class="r num" style="color:' + (r.endDate ? 'var(--ink-3)' : 'inherit') + '">' + m(currentRate(r).weeklyCents) + '</span></button>'; });
+  h += '</section>';
+  var subs = subsAll().filter(function (s) { return s.clientId === c.id; });
+  h += '<section class="panel"><h3>Bônus <button class="linkbtn" data-act="newSub" data-client="' + esc(c.id) + '">+ Registrar</button></h3>';
+  if (!subs.length) h += '<p class="note" style="margin:0">Nenhum bônus registrado.</p>';
+  subs.forEach(function (s) { h += '<button class="rowline" data-act="bonus" data-id="' + esc(s.id) + '"><div class="grow"><b>' + esc(s.platform + ' ' + s.accountLabel) + '</b><small>' + dm(s.periodStart) + ' – ' + dm(s.periodEnd) + ' · parte dele ' + m(s.clientCents) + '</small></div><span class="st ' + s.status + '">' + SUBL[s.status] + '</span></button>'; });
+  h += '</section>';
+  // Histórico unificado: cobranças e pagamentos na linha do tempo
+  var ev = [];
+  chs.forEach(function (x) { ev.push({d: x.dueDate, k: 0, html: '<div class="tl ' + (x.status === 'atrasada' ? 'late' : '') + '"><button class="row1" style="width:100%" data-act="charge" data-id="' + esc(x.id) + '"><span>Cobrança ' + esc(x.platform + ' ' + x.accountLabel) + '</span><span class="num">' + m(x.amountCents) + '</span></button><small>' + dmy(x.dueDate) + ' · ' + (x.cancelledAt ? 'cancelada' : x.status === 'quitada' ? 'quitada' : 'falta ' + m(x.balanceCents)) + '</small></div>'}); });
+  pays.forEach(function (p) { var x = ids[p.chargeId]; ev.push({d: p.paidOn, k: 1, html: '<div class="tl money"><button class="row1" style="width:100%" data-act="charge" data-id="' + esc(p.chargeId) + '"><span>Pagou</span><span class="num" style="color:var(--money)">+' + m(p.amountCents) + '</span></button><small>' + dmy(p.paidOn) + (p.method ? ' · ' + esc(p.method) : '') + ' · ref. ' + dm(x.dueDate) + '</small></div>'}); });
+  ev.sort(function (a, b) { return a.d < b.d ? 1 : a.d > b.d ? -1 : b.k - a.k; });
+  if (ev.length) { var lim = view.allHist ? ev.length : 12; h += '<section class="panel"><h3>Histórico <small>' + ev.length + ' registros</small></h3><div class="timeline">' + ev.slice(0, lim).map(function (e) { return e.html; }).join('') + '</div>' + (ev.length > lim ? '<button class="linkbtn" data-act="allHist">Ver histórico completo</button>' : '') + '</section>'; }
+  return h;
+};
+
+var SUBL = {aguardando: 'Aguardando', recebido: 'Recebido', repassado: 'Repassado'};
+function splitViz(s) {
+  var cp = s.receivedCents ? s.clientCents / s.receivedCents * 100 : s.clientBps / 100;
+  return '<div class="split"><i class="c" style="width:' + cp + '%"></i><i class="m" style="width:' + (100 - cp) + '%"></i></div><div class="splitlegend"><span>Cliente ' + (s.clientBps / 100).toLocaleString('pt-BR') + '% · <b>' + m(s.clientCents) + '</b></span><span>Você · <b>' + m(s.mineCents) + '</b></span></div>';
+}
+function stepper(st) {
+  var order = ['aguardando', 'recebido', 'repassado'], idx = order.indexOf(st);
+  var lab = ['Aguardando', 'Recebido', 'Repassado'];
+  var h = '<div class="steps">';
+  order.forEach(function (k, i) {
+    var cls = i < idx || (i === idx && i === 2) ? 'is-done' : i === idx ? 'cur' : '';
+    h += (i ? '<div class="stepline ' + (i <= idx ? 'is-fill' : '') + '"></div>' : '') + '<div class="step ' + cls + '"><i>' + (cls === 'is-done' ? I.check : (i + 1)) + '</i>' + lab[i] + '</div>';
+  });
+  return h + '</div>';
+}
+/* ---------- Painel ---------- */
+function paidDateOf(c) {
+  var acc = 0, when = null;
+  paymentsFor(c.id).some(function (p) { acc += p.amountCents; if (acc >= c.amountCents) { when = p.paidOn; return true; } return false; });
+  return when;
+}
+P.painel = function () {
+  var accs = list('accounts').map(function (a) { a.status = accountStatus(a); a.rental = activeRental(a.id); return a; }).sort(function (a, b) { return (a.platform + a.label).localeCompare(b.platform + b.label); });
+  var n = {livre: 0, alugada: 0, pausada: 0}; accs.forEach(function (a) { n[a.status]++; });
+  var usable = accs.length - n.pausada, occ = usable ? n.alugada / usable : 0;
+  var weekly = accs.reduce(function (s, a) { return s + (a.rental ? currentRate(a.rental).weeklyCents : 0); }, 0);
+  var avgRate = n.alugada ? weekly / n.alugada : 0;
+  var cls = list('clients'), activeCl = cls.filter(function (c) { return list('rentals').some(function (r) { return r.clientId === c.id && !r.endDate; }); }).length;
+  var chs = allCharges(), live = chs.filter(function (c) { return !c.cancelledAt; });
+  var open = live.filter(function (c) { return c.open; }), openT = open.reduce(function (s, c) { return s + c.balanceCents; }, 0);
+  var lateCh = open.filter(function (c) { return c.dueDate < today; }), lateT = lateCh.reduce(function (s, c) { return s + c.balanceCents; }, 0);
+  var pays = list('payments'), ym = today.slice(0, 7), pm = fd(new Date(Date.UTC(+today.slice(0, 4), +today.slice(5, 7) - 2, 1))).slice(0, 7);
+  var monthT = pays.filter(function (p) { return p.paidOn.slice(0, 7) === ym; }).reduce(function (s, p) { return s + p.amountCents; }, 0);
+  var prevT = pays.filter(function (p) { return p.paidOn.slice(0, 7) === pm; }).reduce(function (s, p) { return s + p.amountCents; }, 0);
+  var subs = subsAll(), toPass = subs.filter(function (s) { return s.status === 'recebido'; }).reduce(function (t, s) { return t + s.clientCents; }, 0), waitN = subs.filter(function (s) { return s.status === 'aguardando'; }).length;
+
+  var h = '<div class="pagehead"><h1><span class="sub">Como está o negócio</span>Painel</h1><button class="iconbtn" data-act="settings" aria-label="Dados e backup">' + I.gear + '</button></div>';
+  if (!accs.length) return h + emptyState(I.chart, 'O painel aparece com as suas contas', 'Cadastre contas e clientes para ver ocupação, recebimentos e quem paga em dia.', '<p><button class="btn pri" data-act="newAccount">' + I.plus + '<span>Cadastrar conta</span></button></p>');
+
+  // Frota: cada conta é um bloco
+  h += '<section class="hero fleet"><div class="hero-top"><span class="hero-range"><b>Frota</b> · ' + accs.length + ' conta' + (accs.length === 1 ? '' : 's') + '</span><span class="occ num">' + Math.round(occ * 100) + '%<small>ocupação</small></span></div>';
+  h += '<div class="blocks">' + accs.map(function (a) {
+    var st = a.status === 'alugada' ? 'background:' + platColor(a.platform) : '';
+    return '<button class="blk ' + a.status + '" style="' + st + '" data-act="account" data-id="' + esc(a.id) + '" title="' + esc(a.platform + ' ' + a.label) + '">' + esc(a.label) + '</button>';
+  }).join('') + '</div>';
+  h += '<div class="legend"><span><i class="lg-a"></i>' + n.alugada + ' alugada' + (n.alugada === 1 ? '' : 's') + '</span><span><i class="lg-l"></i>' + n.livre + ' livre' + (n.livre === 1 ? '' : 's') + '</span>' + (n.pausada ? '<span><i class="lg-p"></i>' + n.pausada + ' pausada' + (n.pausada === 1 ? '' : 's') + '</span>' : '') + '</div></section>';
+
+  // Números-chave
+  var tile = function (label, value, foot, tone, act) { return '<' + (act ? 'button data-act="' + act + '"' : 'div') + ' class="kpi ' + (tone || '') + '"><span>' + label + '</span><b class="num">' + value + '</b><small>' + foot + '</small></' + (act ? 'button' : 'div') + '>'; };
+  h += '<div class="kpis">';
+  h += tile('Rende por semana', m(weekly), '≈ ' + m(Math.round(weekly * 52 / 12)) + ' por mês');
+  h += n.livre ? tile('Parado em contas livres', m(Math.round(n.livre * avgRate)), 'por semana, na média atual', 'warn', 'goFree') : tile('Contas paradas', 'Nenhuma', 'toda a frota está rendendo', 'good');
+  h += tile('Recebido em ' + MONL[+ym.slice(5) - 1], m(monthT), MONL[+pm.slice(5) - 1] + ': ' + m(prevT));
+  h += tile('Em aberto', m(openT), lateT ? m(lateT) + ' em atraso' : 'nada em atraso', lateT ? 'bad' : '');
+  h += tile('Clientes', activeCl + '<em> de ' + cls.length + '</em>', 'com conta agora', '', 'goClients');
+  h += tile('Bônus a repassar', m(toPass), waitN + ' aguardando a plataforma', toPass ? 'promise' : '', 'goBonus');
+  h += '</div>';
+
+  // Últimas 8 semanas
+  var weeks = []; for (var i = 7; i >= 0; i--) weeks.push(addDays(weekStart(today), -7 * i));
+  var data = weeks.map(function (w) {
+    var we = addDays(w, 6);
+    return {w: w, got: pays.filter(function (p) { return p.paidOn >= w && p.paidOn <= we; }).reduce(function (s, p) { return s + p.amountCents; }, 0),
+      exp: live.filter(function (c) { return c.dueDate >= w && c.dueDate <= we; }).reduce(function (s, c) { return s + c.amountCents; }, 0)};
+  });
+  var mx = Math.max.apply(null, data.map(function (d) { return Math.max(d.got, d.exp); }).concat([1]));
+  var withData = data.filter(function (d) { return d.got || d.exp; }), avg = withData.length ? Math.round(withData.reduce(function (s, d) { return s + d.got; }, 0) / withData.length / 100) * 100 : 0;
+  var W = 320, H = 150, bw = 26, gap = (W - bw * 8) / 7, svg = '';
+  data.forEach(function (d, k) {
+    var x = k * (bw + gap), he = Math.round(d.exp / mx * (H - 34)), hg = Math.round(d.got / mx * (H - 34)), cur = k === 7;
+    svg += '<rect x="' + x + '" y="' + (H - 18 - he) + '" width="' + bw + '" height="' + Math.max(he, 2) + '" rx="7" class="b-exp"/>';
+    if (hg) svg += '<rect x="' + x + '" y="' + (H - 18 - hg) + '" width="' + bw + '" height="' + hg + '" rx="7" class="' + (cur ? 'b-cur' : 'b-got') + '"/>';
+    svg += '<text x="' + (x + bw / 2) + '" y="' + (H - 3) + '" class="b-lbl' + (cur ? ' on' : '') + '">' + br(d.w) + '</text>';
+    if (cur && (d.got || d.exp)) svg += '<text x="' + Math.min(x + bw / 2, W - 30) + '" y="' + Math.max(H - 24 - Math.max(he, hg), 11) + '" class="b-val">' + m(d.got) + '</text>';
+  });
+  h += '<section class="panel"><h3>Recebido por semana <small>média ' + m(avg) + '</small></h3><svg class="bars" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Recebido nas últimas 8 semanas">' + svg + '</svg><div class="legend dark"><span><i style="background:var(--money)"></i>Recebido</span><span><i style="background:var(--surface-2)"></i>Previsto</span></div></section>';
+
+  // Idade do atraso
+  var buckets = [[1, 7, 'Até 1 semana', 'var(--due)'], [8, 14, '1 a 2 semanas', '#F0743E'], [15, 99999, 'Mais de 2 semanas', 'var(--late)']].map(function (b) {
+    var items = lateCh.filter(function (c) { var dd = diffDays(c.dueDate, today); return dd >= b[0] && dd <= b[1]; });
+    return {label: b[2], color: b[3], total: items.reduce(function (s, c) { return s + c.balanceCents; }, 0), n: items.length};
+  });
+  h += '<section class="panel"><h3>Há quanto tempo está atrasado <small>' + m(lateT) + '</small></h3>';
+  if (!lateT) h += '<p class="note" style="margin:0">Ninguém em atraso agora.</p>';
+  else {
+    h += '<div class="stack">' + buckets.filter(function (b) { return b.total; }).map(function (b) { return '<i style="width:' + (b.total / lateT * 100) + '%;background:' + b.color + '"></i>'; }).join('') + '</div>';
+    buckets.forEach(function (b) { h += '<div class="rowline"><i class="sw" style="background:' + b.color + '"></i><div class="grow"><b>' + b.label + '</b><small>' + b.n + ' cobrança' + (b.n === 1 ? '' : 's') + '</small></div><b class="r num">' + m(b.total) + '</b></div>'; });
+  }
+  h += '</section>';
+
+  // Quem paga em dia
+  var rel = cls.map(function (c) {
+    var due = live.filter(function (x) { return x.clientId === c.id && x.dueDate <= today; });
+    if (!due.length) return null;
+    var onTime = 0, delays = 0;
+    due.forEach(function (x) { var pdte = paidDateOf(x); if (pdte && diffDays(x.dueDate, pdte) <= 1) onTime++; delays += pdte ? Math.max(0, diffDays(x.dueDate, pdte)) : diffDays(x.dueDate, today); });
+    return {c: c, score: onTime / due.length, delay: delays / due.length, n: due.length};
+  }).filter(Boolean).sort(function (a, b) { return b.score - a.score || a.delay - b.delay; });
+  h += '<section class="panel"><h3>Quem paga em dia <small>até 1 dia após o vencimento</small></h3>';
+  if (!rel.length) h += '<p class="note" style="margin:0">Aparece depois do primeiro vencimento.</p>';
+  rel.forEach(function (r) {
+    var tone = r.score >= .9 ? 'var(--money)' : r.score >= .6 ? 'var(--due)' : 'var(--late)';
+    var dl = Math.round(r.delay);
+    h += '<button class="rowline" data-act="client" data-id="' + esc(r.c.id) + '">' + avatar(r.c.name, r.c.id, 'sm') + '<div class="grow"><b>' + esc(r.c.name) + '</b><div class="meter"><i style="width:' + Math.max(r.score * 100, 4) + '%;background:' + tone + '"></i></div></div><div class="r"><b class="num" style="color:' + tone + '">' + Math.round(r.score * 100) + '%</b><small>' + (dl ? 'atraso médio ' + dl + ' dia' + (dl === 1 ? '' : 's') : 'nunca atrasou') + '</small></div></button>';
+  });
+  h += '</section>';
+
+  // Para o contador
+  var yr = today.slice(0, 4);
+  var yCh = live.filter(function (c) { return c.dueDate.slice(0, 4) === yr; });
+  var yGross = yCh.reduce(function (s, c) { return s + (c.grossCents || 0); }, 0), yMissing = yCh.filter(function (c) { return c.dueDate <= today && c.grossCents == null; }).length;
+  var yRent = pays.filter(function (p) { return p.paidOn.slice(0, 4) === yr; }).reduce(function (s, p) { return s + p.amountCents; }, 0);
+  var ySubMine = subs.filter(function (s2) { return s2.status !== 'aguardando' && (s2.receivedOn || s2.periodEnd).slice(0, 4) === yr; }).reduce(function (t, s2) { return t + s2.mineCents; }, 0);
+  h += '<section class="panel"><h3>Para o contador <small>' + yr + '</small></h3><div class="kv"><div><span>Faturado nas plataformas</span><b class="num">' + m(yGross) + '</b></div><div><span>Aluguel recebido</span><b class="num" style="color:var(--money)">' + m(yRent) + '</b></div><div><span>Ficou com os clientes</span><b class="num">' + m(Math.max(yGross - yRent, 0)) + '</b></div><div><span>Sua parte nos bônus</span><b class="num">' + m(ySubMine) + '</b></div></div>' + (yMissing ? '<p class="note" style="margin:12px 0 0;color:var(--due)">' + yMissing + ' semana' + (yMissing === 1 ? '' : 's') + ' sem o faturamento anotado. Abra a cobrança e preencha.</p>' : '') + '<button class="btn block ghost" style="margin-top:12px" data-act="taxCsv" data-v="' + yr + '">Copiar planilha do ano</button></section>';
+
+  // Rendimento por conta
+  var earn = accs.map(function (a) {
+    var ids = {}; chs.forEach(function (c) { if (c.accountId === a.id) ids[c.id] = 1; });
+    var tot = pays.filter(function (p) { return ids[p.chargeId]; }).reduce(function (s, p) { return s + p.amountCents; }, 0);
+    var idle = null;
+    if (a.status === 'livre') { var ends = list('rentals').filter(function (r) { return r.accountId === a.id && r.endDate; }).map(function (r) { return r.endDate; }).sort(); var since = ends.length ? ends[ends.length - 1] : (a.createdAt || nowIso()).slice(0, 10); idle = Math.max(0, diffDays(since, today)); }
+    return {a: a, tot: tot, idle: idle};
+  }).sort(function (x, y) { return y.tot - x.tot; });
+  var emx = Math.max.apply(null, earn.map(function (e) { return e.tot; }).concat([1]));
+  h += '<section class="panel"><h3>Quanto cada conta já rendeu</h3>';
+  earn.forEach(function (e) {
+    h += '<button class="rowline" data-act="account" data-id="' + esc(e.a.id) + '"><span class="plate-sm" style="background:' + platColor(e.a.platform) + '">' + esc(e.a.label) + '</span><div class="grow"><div class="meter"><i style="width:' + Math.max(e.tot / emx * 100, 3) + '%;background:' + platColor(e.a.platform) + '"></i></div><small>' + (e.idle !== null ? '<span style="color:var(--due);font-weight:600">parada há ' + e.idle + ' dia' + (e.idle === 1 ? '' : 's') + '</span>' : e.a.status === 'pausada' ? 'pausada' : esc(e.a.platform)) + '</small></div><b class="r num">' + m(e.tot) + '</b></button>';
+  });
+  h += '</section>';
+  view.after = function () { var bl = document.querySelectorAll('.blk'); bl.forEach(function (b, k) { b.style.animationDelay = (k * 35) + 'ms'; }); };
+  return h;
+};
+P.bonus = function () {
+  var f = view.filter || '', all = subsAll();
+  var toPass = all.filter(function (s) { return s.status === 'recebido'; }).reduce(function (t, s) { return t + s.clientCents; }, 0);
+  var waiting = all.filter(function (s) { return s.status === 'aguardando'; }).length;
+  var mine = all.filter(function (s) { return s.status !== 'aguardando'; }).reduce(function (t, s) { return t + s.mineCents; }, 0);
+  var h = '<div class="pagehead">' + backBtn() + '<h1><span class="sub">Subsídios das plataformas</span>Bônus</h1><button class="iconbtn" data-act="newSub" aria-label="Registrar bônus">' + I.plus + '</button></div>';
+  h += '<section class="hero" style="padding-bottom:18px"><div class="hero-body" style="gap:14px"><div class="hero-figs"><div class="fig-main"><span>Falta repassar</span><b>' + m(toPass) + '</b><i>de bônus já recebidos</i></div><div class="fig-pills"><span class="fpill"><span class="d" style="background:#FFC857"></span>' + waiting + ' aguardando</span><span class="fpill"><span class="d" style="background:#5BE3A8"></span>Sua parte ' + m(mine) + '</span></div></div></div></section>';
+  var b = function (k, l) { return '<button class="' + (f === k ? 'on' : '') + '" data-act="subFilter" data-v="' + k + '">' + l + '</button>'; };
+  h += '<div class="seg" style="margin-top:14px">' + b('', 'Todos') + b('aguardando', 'Aguardando') + b('recebido', 'Recebidos') + b('repassado', 'Repassados') + '</div>';
+  var shown = all.filter(function (s) { return !f || s.status === f; });
+  shown.forEach(function (s) {
+    h += '<button class="panel" style="display:block;width:100%;text-align:left" data-act="bonus" data-id="' + esc(s.id) + '"><div style="display:flex;align-items:center;gap:12px">' + avatar(s.clientName, s.clientId) + '<div style="flex:1;min-width:0"><b>' + esc(s.clientName) + '</b><br>' + tok(s.platform, s.accountLabel) + '</div><span class="st ' + s.status + '">' + SUBL[s.status] + '</span></div><div class="note" style="margin:10px 0 0">' + dm(s.periodStart) + ' – ' + dm(s.periodEnd) + ' · recebido ' + m(s.receivedCents) + '</div>' + splitViz(s) + '</button>';
+  });
+  if (!shown.length) h += emptyState(I.gift, f ? 'Nada neste filtro' : 'Nenhum bônus ainda', 'Registre o subsídio da plataforma e a parte de cada cliente.', f ? '' : '<p><button class="btn pri" data-act="newSub">' + I.plus + '<span>Registrar bônus</span></button></p>');
+  return h;
+};
+P.bonusDetail = function () {
+  var s = subsAll().find(function (x) { return x.id === view.id; }); if (!s) throw new Error('nf');
+  var usage = usageIn(s.accountId, s.periodStart, s.periodEnd), used = usage.some(function (u) { return u.clientId === s.clientId; });
+  var h = '<div class="pagehead">' + backBtn() + '<h1 style="font-size:22px">Bônus</h1><button class="iconbtn" data-act="editSub" data-id="' + esc(s.id) + '" aria-label="Editar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/><path d="m13.5 6.5 4 4"/></svg></button></div>';
+  h += '<section class="panel"><div class="clienthero" style="margin-bottom:6px">' + avatar(s.clientName, s.clientId, 'lg') + '<div><h2>' + esc(s.clientName) + '</h2>' + tok(s.platform, s.accountLabel) + '</div></div>' + stepper(s.status);
+  h += '<div class="kv" style="margin-top:16px"><div><span>Período</span><b style="font-size:16px">' + dm(s.periodStart) + ' – ' + dm(s.periodEnd) + '</b></div><div><span>Plataforma pagou</span><b class="num">' + m(s.receivedCents) + '</b></div></div>' + splitViz(s);
+  if (s.receivedOn || s.passedOn) h += '<p class="note" style="margin:10px 0 0">' + (s.receivedOn ? 'Recebido em ' + dmy(s.receivedOn) : '') + (s.passedOn ? ' · repassado em ' + dmy(s.passedOn) : '') + '</p>';
+  if (s.notes) h += '<p style="white-space:pre-wrap;color:var(--ink-2);font-size:14px">' + esc(s.notes) + '</p>';
+  h += '<div style="display:flex;flex-direction:column;gap:8px;margin-top:16px">';
+  if (s.status === 'aguardando') h += '<button class="btn pri block" data-act="subStatus" data-id="' + esc(s.id) + '" data-v="recebido">Plataforma pagou</button>';
+  if (s.status === 'recebido') h += '<button class="btn pri block" data-act="subStatus" data-id="' + esc(s.id) + '" data-v="repassado">Repassei ' + m(s.clientCents) + '</button>';
+  h += waA(s.clientPhone, WA.bonus(s), 'Avisar sobre o bônus', 'block') + '</div></section>';
+  h += '<section class="panel"><h3>Quem usava a conta</h3><div class="usage ' + (used ? '' : 'bad') + '">' + (usage.length ? usage.map(function (u) { var c = get('clients', u.clientId) || {}; return (u.clientId === s.clientId ? '✓ ' : '• ') + esc(c.name) + ' <span style="color:var(--ink-3)">(' + dm(u.startDate) + ' → ' + (u.endDate ? dm(u.endDate) : 'agora') + ')</span>'; }).join('<br>') : 'Ninguém tinha essa conta no período.') + (used ? '' : '<br><b>' + esc(s.clientName) + ' não aparece nesse período. Confira antes de repassar.</b>') + '</div></section>';
+  return h;
+};
+
+/* ================= Folhas ================= */
+function chargeSheet(id) {
+  openSheet(function () {
+    var raw = get('charges', id); if (!raw) { setTimeout(closeSheet); return ''; }
+    var c = decorate(raw), pays = paymentsFor(c.id), w = whenLine(c), pct = c.amountCents ? Math.min(c.paidCents / c.amountCents, 1) : 0, R = 30, C = 2 * Math.PI * R;
+    var h = '<div style="display:flex;gap:14px;align-items:center;margin-bottom:14px"><div style="position:relative;width:74px;height:74px;flex-shrink:0"><svg viewBox="0 0 74 74" style="transform:rotate(-90deg);width:74px;height:74px"><circle cx="37" cy="37" r="' + R + '" fill="none" stroke="var(--surface-2)" stroke-width="8"/><circle cx="37" cy="37" r="' + R + '" fill="none" stroke="var(--money)" stroke-width="8" stroke-linecap="round" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C * (1 - pct)).toFixed(1) + '"/></svg><div style="position:absolute;inset:0;display:grid;place-items:center;font:800 17px var(--f-display)">' + Math.round(pct * 100) + '%</div></div>';
+    h += '<div style="min-width:0"><h2 style="margin:0">' + esc(c.clientName) + '</h2>' + tok(c.platform, c.accountLabel) + '<span class="when ' + w[0] + '">' + w[1] + '</span></div></div>';
+    h += '<div class="panel"><div class="kv"><div><span>Saldo</span><b class="num" style="font-size:24px;color:' + (c.open ? 'var(--late)' : 'var(--money)') + '">' + m(c.balanceCents) + '</b></div><div><span>Vencimento</span><b style="font-size:16px">' + wdm(c.dueDate) + '</b></div><div><span>Valor da semana</span><b class="num">' + m(c.amountCents) + '</b></div><div><span>Pago</span><b class="num" style="color:var(--money)">' + m(c.paidCents) + '</b></div></div></div>';
+    if (c.open) h += '<div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn pri grow" data-act="pay" data-id="' + esc(c.id) + '">' + I.cash + '<span>Recebi</span></button>' + waA(c.clientPhone, WA.collect(c), 'Cobrar', 'grow') + waA(c.clientPhone, WA.reminder(c), '', '') + '</div>';
+    // Promessa
+    if (c.open) {
+      var opts = [['Amanhã', addDays(today, 1)], ['Sexta', nextWdFrom(addDays(today, 1), 5)], ['Segunda', nextWdFrom(addDays(today, 1), 1)]];
+      h += '<div class="panel"><h3>Promessa de pagamento ' + (c.promiseDate ? '<button class="linkbtn danger" data-act="clearPromise" data-id="' + esc(c.id) + '">Remover</button>' : '') + '</h3>';
+      if (c.promiseDate) h += '<p style="margin:0 0 10px;font-weight:600;color:' + (c.promiseBroken ? 'var(--late)' : 'var(--promise)') + '">Combinado para ' + wdm(c.promiseDate) + (c.promiseNote ? ' · ' + esc(c.promiseNote) : '') + '</p>';
+      h += '<form data-form="promise" data-id="' + esc(c.id) + '"><div class="chips" style="margin-bottom:10px">' + opts.map(function (o) { return '<button type="button" class="chip ' + (c.promiseDate === o[1] ? 'on' : '') + '" data-setdate="' + o[1] + '">' + o[0] + ' ' + br(o[1]) + '</button>'; }).join('') + '</div><div class="two"><input type="date" name="promiseDate" value="' + (c.promiseDate || '') + '" required aria-label="Data prometida"><input name="promiseNote" value="' + esc(c.promiseNote) + '" placeholder="Observação"></div><button class="btn block" style="margin-top:10px">Salvar promessa</button></form><p class="note" style="margin:8px 0 0">No dia combinado ela volta ao topo da semana. O vencimento continua ' + dm(c.dueDate) + '.</p></div>';
+    }
+    h += '<div class="panel"><h3>Faturamento na plataforma <small>para o imposto</small></h3><form data-form="gross" data-id="' + esc(c.id) + '" style="display:flex;gap:8px;align-items:center"><div class="money-in" style="flex:1;padding:8px 14px"><span style="font-size:17px">US$</span><input name="gross" inputmode="decimal" value="' + (c.grossCents ? toInput(c.grossCents) : '') + '" placeholder="quanto a conta fez" autocomplete="off" style="font-size:22px"></div><button class="btn">Salvar</button></form><p class="note" style="margin:8px 0 0">Total que a plataforma pagou na conta nessa semana (aparece no app dela). Serve para o contador separar o que foi seu e o que foi do cliente.</p></div>';
+    h += '<div class="panel"><h3>Pagamentos <small>' + pays.length + '</small></h3>';
+    if (!pays.length) h += '<p class="note" style="margin:0">Nenhum pagamento lançado.</p>';
+    pays.forEach(function (p) {
+      if (sheet.editPay === p.id) {
+        h += '<form data-form="editPay" data-id="' + esc(p.id) + '" style="padding:10px 0;border-top:1px solid var(--line)"><div class="two"><label class="field"><span>Valor</span><input name="amount" inputmode="decimal" value="' + toInput(p.amountCents) + '" required></label><label class="field"><span>Data</span><input type="date" name="paidOn" value="' + p.paidOn + '" required></label></div><label class="field"><span>Forma</span><input name="method" value="' + esc(p.method) + '"></label><div style="display:flex;gap:8px"><button class="btn pri grow">Salvar correção</button><button type="button" class="btn ghost" data-act="editPay" data-id="">Cancelar</button></div><button type="button" class="linkbtn danger" data-act="delPay" data-id="' + esc(p.id) + '">Excluir pagamento</button></form>';
+      } else {
+        h += '<div class="rowline"><span class="av sm" style="background:var(--money)">' + I.check.replace('<svg', '<svg width="15" height="15"') + '</span><div class="grow"><b class="num">' + m(p.amountCents) + '</b><small>' + wdm(p.paidOn) + (p.method ? ' · ' + esc(p.method) : '') + (p.updatedAt ? ' · corrigido' : '') + '</small></div><a class="linkbtn" target="_blank" rel="noopener" href="' + esc(waLink(c.clientPhone, WA.confirm(c, p))) + '">Confirmar</a><button class="linkbtn" style="margin-left:10px;color:var(--ink-3)" data-act="editPay" data-id="' + esc(p.id) + '">Corrigir</button></div>';
+      }
+    });
+    h += '</div>';
+    h += c.cancelledAt ? '<button class="btn block ghost" data-act="reactivate" data-id="' + esc(c.id) + '">Reativar cobrança</button>' : '<p style="text-align:center;margin:4px 0"><button class="linkbtn danger" data-act="cancelCharge" data-id="' + esc(c.id) + '">Cancelar esta cobrança</button></p>';
+    return h;
+  }, {live: true, chargeId: id});
+}
+
+function paySheet(id) {
+  var c0 = decorate(get('charges', id));
+  openSheet(function () {
+    var c = decorate(get('charges', id));
+    var half = Math.round(c.balanceCents / 2);
+    var h = '<h2>Recebi de ' + esc(first(c.clientName)) + '</h2><p class="lead">' + esc(c.platform + ' ' + c.accountLabel) + ' · semana de ' + dm(c.dueDate) + ' · falta ' + m(c.balanceCents) + '</p>';
+    h += '<form data-form="pay" data-id="' + esc(id) + '"><div class="field"><div class="money-in"><span>US$</span><input name="amount" id="payAmt" inputmode="decimal" value="' + toInput(c.balanceCents) + '" required autocomplete="off"></div></div>';
+    h += '<div class="chips" style="margin:-4px 0 16px"><button type="button" class="chip on" data-amt="' + toInput(c.balanceCents) + '">Tudo ' + m(c.balanceCents) + '</button>' + (half > 0 && half < c.balanceCents ? '<button type="button" class="chip" data-amt="' + toInput(half) + '">Metade ' + m(half) + '</button>' : '') + '</div>';
+    h += '<div class="field"><span>Quando</span><div class="chips"><button type="button" class="chip on" data-paydate="' + today + '">Hoje</button><button type="button" class="chip" data-paydate="' + addDays(today, -1) + '">Ontem</button></div><input type="date" name="paidOn" value="' + today + '" required style="margin-top:4px"></div>';
+    h += '<div class="field"><span>Como</span><div class="chips">' + ['Zelle','Dinheiro','Cash App','Venmo'].map(function (x) { return '<button type="button" class="chip" data-method="' + x + '">' + x + '</button>'; }).join('') + '</div><input type="hidden" name="method" value=""></div>';
+    h += '<button class="btn pri block" style="min-height:54px;font-size:16px">' + I.check + '<span>Registrar pagamento</span></button></form>';
+    return h;
+  }, {kind: 'pay'});
+  void c0;
+}
+
+function paidSheet(chargeId, pid) {
+  openSheet(function () {
+    var c = decorate(get('charges', chargeId)), p = get('payments', pid);
+    if (!p) return '';
+    var colors = ['#5BE3A8','#7C5CFF','#FFC857','#FF8A8D','#138FBF'], burst = '';
+    if (!c.open) for (var i = 0; i < 18; i++) { var ang = i / 18 * Math.PI * 2, dist = 80 + (i % 3) * 30; burst += '<i style="background:' + colors[i % 5] + ';--x:' + Math.round(Math.cos(ang) * dist) + 'px;--y:' + Math.round(Math.sin(ang) * dist) + 'px"></i>'; }
+    return '<div class="done" style="position:relative"><div class="burst">' + burst + '</div><svg class="stamp" viewBox="0 0 96 96"><circle cx="48" cy="48" r="44"/><path d="M29 49.5 42 62l25-27"/></svg><h2>' + m(p.amountCents) + ' recebido</h2><p class="left">' + (c.open ? 'Ainda falta <b class="num">' + m(c.balanceCents) + '</b> desta semana' : '<b class="ok">Semana quitada.</b> ' + esc(first(c.clientName)) + ' está em dia com essa conta') + '</p>' +
+      '<div style="display:flex;flex-direction:column;gap:8px">' + waA(c.clientPhone, WA.confirm(c, p), 'Confirmar no WhatsApp', 'block') + '<button class="btn block ghost" data-act="closeSheet">Fechar</button></div></div>';
+  });
+}
+
+function clientSheet(id, afterAccount) {
+  var c = id ? get('clients', id) : {};
+  openSheet(function () {
+    return '<h2>' + (id ? 'Editar cliente' : 'Novo cliente') + '</h2><p class="lead">O WhatsApp é usado nos lembretes e cobranças.</p><form data-form="client" data-id="' + esc(id || '') + '" data-after="' + esc(afterAccount || '') + '"><label class="field"><span>Nome</span><input name="name" required autocomplete="off" value="' + esc(c.name || '') + '" placeholder="Nome e sobrenome"></label><label class="field"><span>WhatsApp</span><input name="phone" type="tel" inputmode="tel" required value="' + esc(c.phone ? fmtPhone(c.phone) : '') + '" placeholder="+1 555 123 4567"><small>Com código do país. Número americano de 10 dígitos recebe +1 automaticamente.</small></label><label class="field"><span>Observações</span><textarea name="notes" placeholder="Ex.: prefere Zelle, trabalha à noite">' + esc(c.notes || '') + '</textarea></label><button class="btn pri block">' + (id ? 'Salvar' : 'Cadastrar cliente') + '</button></form>';
+  });
+}
+function accountSheet(id) {
+  var a = id ? get('accounts', id) : {};
+  openSheet(function () {
+    var plats = Object.keys(PLAT).map(function (k) { return k.replace(/\b\w/g, function (x) { return x.toUpperCase(); }).replace('Doordash', 'DoorDash'); });
+    return '<h2>' + (id ? 'Editar conta' : 'Nova conta') + '</h2><p class="lead">Só dados de controle. Não guarde senha da plataforma aqui.</p><form data-form="account" data-id="' + esc(id || '') + '"><div class="field"><span>Plataforma</span><div class="chips" style="margin-bottom:6px">' + plats.slice(0, 4).map(function (p) { return '<button type="button" class="chip ' + ((a.platform || '') === p ? 'on' : '') + '" data-plat="' + p + '"><span style="display:inline-block;width:9px;height:9px;border-radius:3px;background:' + platColor(p) + ';margin-right:6px"></span>' + p + '</button>'; }).join('') + '</div><input name="platform" required value="' + esc(a.platform || '') + '" placeholder="Ou digite outra"></div><div class="two"><label class="field"><span>Identificação</span><input name="label" required value="' + esc(a.label || '') + '" placeholder="GH-01" autocapitalize="characters"></label><label class="field"><span>Região</span><input name="region" value="' + esc(a.region || '') + '" placeholder="Anaheim"></label></div><label class="field"><span>Observações</span><textarea name="notes">' + esc(a.notes || '') + '</textarea></label><button class="btn pri block">' + (id ? 'Salvar' : 'Cadastrar conta') + '</button>' + (id && !activeRental(id) ? '<p style="text-align:center;margin:10px 0 0"><button type="button" class="linkbtn" data-act="pause" data-id="' + esc(id) + '">' + (a.paused ? 'Reativar conta' : 'Pausar conta') + '</button></p>' : '') + '</form>';
+  });
+}
+function adjustSheet(rid) {
+  var r = get('rentals', rid), cur = currentRate(r);
+  openSheet(function () {
+    return '<h2>Reajustar valor</h2><p class="lead">Hoje: ' + m(cur.weeklyCents) + ' por semana. Cobranças já pagas nunca mudam.</p><form data-form="adjust" data-id="' + esc(rid) + '"><div class="field"><span>Novo valor semanal</span><div class="money-in"><span>US$</span><input name="weekly" inputmode="decimal" required autocomplete="off"></div></div><label class="field"><span>Vale para vencimentos a partir de</span><input type="date" name="effectiveDate" value="' + addDays(today, 1) + '" required></label><label class="check"><input type="checkbox" name="applyOpen" value="1"><span>Atualizar também cobranças já lançadas a partir dessa data que ainda não têm pagamento</span></label><button class="btn pri block">Salvar reajuste</button></form>';
+  });
+}
+function endSheet(rid) {
+  var r = get('rentals', rid), c = get('clients', r.clientId) || {name: '?'};
+  openSheet(function () {
+    return '<h2>Encerrar aluguel de ' + esc(first(c.name)) + '</h2><p class="lead">Pendências até o último dia continuam no histórico de ' + esc(first(c.name)) + '. Cobranças depois disso, sem pagamento, são removidas.</p><form data-form="endRental" data-id="' + esc(rid) + '"><label class="field"><span>Último dia de uso</span><input type="date" name="endDate" value="' + today + '" required></label><button class="btn danger block">Encerrar aluguel</button><p class="note" style="text-align:center">Depois é só escolher o novo cliente na conta.</p></form>';
+  });
+}
+function cancelSheet(id) {
+  openSheet(function () { return '<h2>Cancelar cobrança</h2><p class="lead">Ela sai dos totais, mas fica registrada no histórico.</p><form data-form="cancel" data-id="' + esc(id) + '"><label class="field"><span>Motivo</span><input name="reason" placeholder="Ex.: devolveu a conta antes"></label><button class="btn danger block">Cancelar cobrança</button></form>'; });
+}
+function subSheet(pre) {
+  var s = Object.assign({clientBps: 7000, status: 'aguardando'}, pre || {});
+  openSheet(function () {
+    var accs = list('accounts').sort(function (a, b) { return (a.platform + a.label).localeCompare(b.platform + b.label); }), cls = list('clients').sort(function (a, b) { return a.name.localeCompare(b.name); });
+    var opt = function (v, l, sel) { return '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(l) + '</option>'; };
+    var h = '<h2>' + (s.id ? 'Editar bônus' : 'Registrar bônus') + '</h2><p class="lead">Subsídio da plataforma, separado da semanalidade.</p><form data-form="sub" data-id="' + esc(s.id || '') + '">';
+    h += '<label class="field"><span>Conta</span><select name="accountId" id="sAcc" required>' + opt('', 'Escolha a conta') + accs.map(function (a) { return opt(a.id, a.platform + ' · ' + a.label, s.accountId === a.id); }).join('') + '</select></label>';
+    h += '<div class="two"><label class="field"><span>Início do período</span><input type="date" name="periodStart" id="sStart" value="' + (s.periodStart || '') + '" required></label><label class="field"><span>Fim</span><input type="date" name="periodEnd" id="sEnd" value="' + (s.periodEnd || '') + '" required></label></div><div class="usage" id="sUsage" style="margin:-4px 0 14px"></div>';
+    h += '<label class="field"><span>Quem recebe a parte</span><select name="clientId" id="sCli" required>' + opt('', 'Escolha o cliente') + cls.map(function (c) { return opt(c.id, c.name, s.clientId === c.id); }).join('') + '</select></label>';
+    h += '<div class="field"><span>Valor que a plataforma pagou</span><div class="money-in"><span>US$</span><input name="received" id="sRec" inputmode="decimal" value="' + (s.receivedCents ? toInput(s.receivedCents) : '') + '" placeholder="0" autocomplete="off"></div><small>Deixe em branco se ainda está aguardando.</small></div>';
+    h += '<div class="field"><span>Parte do cliente</span><div class="chips">' + [50, 60, 70, 80].map(function (p) { return '<button type="button" class="chip ' + (s.clientBps === p * 100 ? 'on' : '') + '" data-pct="' + p + '">' + p + '%</button>'; }).join('') + '<input name="pct" id="sPct" inputmode="decimal" value="' + s.clientBps / 100 + '" style="width:90px;min-height:40px;padding:8px 12px;border-radius:999px" aria-label="Percentual do cliente"></div></div><div id="sSplit" style="margin:-6px 0 14px"></div>';
+    h += '<div class="field"><span>Situação</span><div class="chips">' + ['aguardando','recebido','repassado'].map(function (k) { return '<button type="button" class="chip ' + (s.status === k ? 'on' : '') + '" data-status="' + k + '">' + SUBL[k] + '</button>'; }).join('') + '</div><input type="hidden" name="status" value="' + s.status + '"></div>';
+    h += '<label class="field"><span>Observações</span><textarea name="notes">' + esc(s.notes || '') + '</textarea></label><input type="hidden" name="receivedOn" value="' + (s.receivedOn || '') + '"><input type="hidden" name="passedOn" value="' + (s.passedOn || '') + '"><button class="btn pri block">Salvar</button>' + (s.id ? '<p style="text-align:center;margin:10px 0 0"><button type="button" class="linkbtn danger" data-act="delSub" data-id="' + esc(s.id) + '">Excluir registro</button></p>' : '') + '</form>';
+    return h;
+  }, {after: wireSub});
+}
+function wireSub() {
+  var $ = function (i) { return document.getElementById(i); };
+  if (!$('sAcc')) return;
+  function usage() {
+    var acc = $('sAcc').value, a = $('sStart').value, b = $('sEnd').value, box = $('sUsage');
+    box.className = 'usage';
+    if (!acc || !a || !b) { box.innerHTML = 'Escolha a conta e o período para conferir quem usava.'; return; }
+    var l = usageIn(acc, a, b);
+    if (!l.length) { box.className = 'usage bad'; box.innerHTML = 'Ninguém tinha essa conta nesse período.'; return; }
+    if (l.length === 1 && !$('sCli').value) $('sCli').value = l[0].clientId;
+    var ch = $('sCli').value, ok = l.some(function (r) { return r.clientId === ch; });
+    box.className = 'usage ' + (ch && !ok ? 'warn' : '');
+    box.innerHTML = '<b>Usava a conta:</b> ' + l.map(function (r) { var c = get('clients', r.clientId) || {}; return esc(c.name) + ' (' + dm(r.startDate) + ' → ' + (r.endDate ? dm(r.endDate) : 'agora') + ')'; }).join(', ') + (ch && !ok ? '<br>O cliente escolhido não usava a conta nesse período.' : '');
+  }
+  function split() {
+    var rec = parseMoney($('sRec').value) || 0, pct = Number(String($('sPct').value).replace(',', '.')) || 0, bps = Math.round(pct * 100), cli = Math.round(rec * bps / 10000);
+    $('sSplit').innerHTML = splitViz({receivedCents: rec, clientCents: cli, mineCents: rec - cli, clientBps: bps});
+  }
+  ['sAcc','sStart','sEnd','sCli'].forEach(function (i) { $(i).addEventListener('change', usage); });
+  ['sRec','sPct'].forEach(function (i) { $(i).addEventListener('input', split); });
+  usage(); split();
+}
+function fabSheet() {
+  openSheet(function () {
+    var openN = allCharges().filter(function (c) { return c.open; }).length;
+    var b = function (act, bg, col, icon, t, s) { return '<button data-act="' + act + '"><i style="background:' + bg + ';color:' + col + '">' + icon + '</i><span>' + t + '<small>' + s + '</small></span></button>'; };
+    return '<h2>Adicionar</h2><p class="lead">O que você quer registrar?</p><div class="menu">' +
+      b('pickPay', 'var(--money-soft)', 'var(--money)', I.cash, 'Pagamento', openN + ' em aberto') +
+      b('newClient', 'var(--promise-soft)', 'var(--promise)', I.people, 'Cliente', 'nome e WhatsApp') +
+      b('newAccount', 'var(--due-soft)', 'var(--due)', I.accounts, 'Conta', 'Grubhub, Flex…') +
+      b('newSub', 'var(--late-soft)', 'var(--late)', I.gift, 'Bônus', 'subsídio da plataforma') + '</div>';
+  });
+}
+function pickPaySheet() {
+  openSheet(function () {
+    var open = sortCh(allCharges().filter(function (c) { return c.open; }));
+    var h = '<h2>Quem pagou?</h2><p class="lead">Escolha a cobrança.</p>';
+    open.forEach(function (c) { var w = whenLine(c); h += '<button class="crow" data-act="pay" data-id="' + esc(c.id) + '">' + avatar(c.clientName, c.clientId) + '<div class="grow"><b>' + esc(c.clientName) + '</b>' + tok(c.platform, c.accountLabel) + '<span class="when ' + w[0] + '">' + w[1] + '</span></div><div class="r"><b class="num ' + (c.status === 'atrasada' ? 'late' : '') + '">' + m(c.balanceCents) + '</b></div></button>'; });
+    if (!open.length) h += emptyState(I.check, 'Tudo recebido', 'Nenhuma cobrança em aberto agora.');
+    return h;
+  });
+}
+function settingsSheet() {
+  openSheet(function () {
+    return '<h2>Dados e backup</h2><p class="lead">' + (mode === 'db' ? 'Seus dados ficam na sua conta do claude.ai e sincronizam entre aparelhos.' : 'Seus dados ficam salvos neste aparelho. Faça backup de vez em quando.') + '</p>' +
+      '<div class="panel"><h3>Copiar backup</h3><p class="note" style="margin:0 0 10px">Copia tudo para colar numa nota ou e-mail.</p><button class="btn block" data-act="backup">Copiar backup</button></div>' +
+      '<div class="panel"><h3>Restaurar backup</h3><form data-form="restore"><textarea name="json" placeholder="Cole aqui o backup copiado" style="min-height:90px"></textarea><button class="btn danger block" style="margin-top:10px">Substituir dados pelo backup</button></form></div>' +
+      '<p class="note">' + list('clients').length + ' clientes · ' + list('accounts').length + ' contas · ' + list('charges').length + ' cobranças · ' + list('payments').length + ' pagamentos</p>';
+  });
+}
+
+/* ================= Ações ================= */
+async function onAction(el) {
+  var act = el.getAttribute('data-act'), id = el.getAttribute('data-id'), v = el.getAttribute('data-v');
+  switch (act) {
+    case 'tab': return tab(v);
+    case 'back': return back();
+    case 'fab': return fabSheet();
+    case 'closeSheet': return closeSheet();
+    case 'settings': return settingsSheet();
+    case 'week': view.w = v; view.day = null; animateRing = true; return render();
+    case 'day': view.day = view.day === v ? null : v; return render();
+    case 'scrollLate': var ls = document.getElementById('lateSec'); if (ls) ls.scrollIntoView({behavior: 'smooth', block: 'start'}); return;
+    case 'charge': return chargeSheet(id);
+    case 'pay': return paySheet(id);
+    case 'pickPay': return pickPaySheet();
+    case 'client': closeSheet(); return go({tab: 'clientes', page: 'cliente', id: id});
+    case 'account': closeSheet(); return go({tab: 'contas', page: 'conta', id: id});
+    case 'bonus': closeSheet(); return go({tab: 'painel', page: 'bonus', id: id});
+    case 'goBonus': return go({tab: 'painel', page: 'bonusList'});
+    case 'goClients': return tab('clientes');
+    case 'goFree': tab('contas'); view.filter = 'livre'; return render();
+    case 'accFilter': view.filter = v; return render();
+    case 'subFilter': view.filter = v; return render();
+    case 'allHist': view.allHist = true; return render();
+    case 'newClient': return clientSheet(null);
+    case 'newClientFor': return clientSheet(null, id);
+    case 'editClient': return clientSheet(id);
+    case 'newAccount': return accountSheet(null);
+    case 'editAccount': return accountSheet(id);
+    case 'adjust': return adjustSheet(id);
+    case 'endRental': return endSheet(id);
+    case 'cancelCharge': return cancelSheet(id);
+    case 'newSub': return subSheet({accountId: el.getAttribute('data-account') || '', clientId: el.getAttribute('data-client') || ''});
+    case 'editSub': return subSheet(get('subsidies', id));
+    case 'editPay': sheet.editPay = id || null; sheet.dirty = false; return paintSheet();
+    case 'delPay':
+      if (!(await ask('Excluir este pagamento?', 'Excluir', true))) return;
+      await write('delete', 'payments', id); sheet.editPay = null; paintSheet(); return toast('Pagamento excluído. Saldo atualizado.');
+    case 'clearPromise': await write('update', 'charges', id, {promiseDate: null, promiseNote: ''}); paintSheet(); return toast('Promessa removida.');
+    case 'reactivate': await write('update', 'charges', id, {cancelledAt: null, cancelReason: ''}); paintSheet(); return toast('Cobrança reativada.');
+    case 'pause':
+      var a = get('accounts', id); if (activeRental(id)) throw new UErr('Encerre o aluguel antes de pausar.');
+      await write('update', 'accounts', id, {paused: !a.paused}); closeSheet(); return toast(a.paused ? 'Conta reativada.' : 'Conta pausada.');
+    case 'subStatus':
+      var s = get('subsidies', id), patch = {status: v};
+      if (v === 'recebido' && !s.receivedCents) { subSheet(Object.assign({}, s, {status: 'recebido'})); return toast('Informe quanto a plataforma pagou.'); }
+      if (v !== 'aguardando' && !s.receivedOn) patch.receivedOn = today;
+      if (v === 'repassado' && !s.passedOn) patch.passedOn = today;
+      await write('update', 'subsidies', id, patch); return toast(v === 'repassado' ? 'Repasse registrado.' : 'Bônus recebido.');
+    case 'delSub':
+      if (!(await ask('Excluir este bônus?', 'Excluir', true))) return;
+      await write('delete', 'subsidies', id); closeSheet(); stack = [{tab: 'painel'}]; view = {tab: 'painel', page: 'bonusList'}; render(); return toast('Bônus excluído.');
+    case 'taxCsv':
+      var rows = [['Vencimento','Plataforma','Conta','Cliente','Faturamento plataforma (US$)','Aluguel cobrado (US$)','Aluguel pago (US$)','Status']];
+      allCharges().filter(function (c) { return c.dueDate.slice(0, 4) === v && !c.cancelledAt; }).sort(function (a, b) { return a.dueDate < b.dueDate ? -1 : 1; }).forEach(function (c) {
+        var dec = function (x) { return x == null ? '' : (x / 100).toFixed(2); };
+        rows.push([c.dueDate, c.platform, c.accountLabel, c.clientName, dec(c.grossCents), dec(c.amountCents), dec(c.paidCents), c.status === 'quitada' ? 'pago' : 'em aberto']);
+      });
+      var csv = rows.map(function (r) { return r.map(function (x) { x = String(x); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(','); }).join('\n');
+      try { await navigator.clipboard.writeText(csv); toast('Planilha copiada. Cole no Numbers, Excel ou num e-mail.'); } catch (e) { toast('Este aparelho não deixou copiar.', true); }
+      return;
+    case 'backup':
+      var data = {app: 'keyring', exportadoEm: nowIso()}; COLS.forEach(function (c) { data[c] = Object.fromEntries(S[c]); });
+      try { await navigator.clipboard.writeText(JSON.stringify(data)); toast('Backup copiado.'); } catch (e) { toast('Este aparelho não deixou copiar.', true); }
+      return;
+  }
+}
+
+async function onForm(form) {
+  var k = form.getAttribute('data-form'), id = form.getAttribute('data-id'), f = fd2(form);
+  switch (k) {
+    case 'pay': {
+      var ch = get('charges', id); if (!ch || ch.cancelledAt) throw new UErr('Essa cobrança não está mais disponível.');
+      var amt = parseMoney(f.amount); if (!(amt > 0)) throw new UErr('Coloque um valor maior que zero.');
+      var pid = uid();
+      await write('set', 'payments', pid, {chargeId: id, amountCents: amt, paidOn: needDate(f.paidOn || today, 'Data inválida.'), method: f.method || '', note: '', createdAt: nowIso(), updatedAt: null});
+      animateRing = view.tab === 'semana' && !view.page; render();
+      return paidSheet(id, pid);
+    }
+    case 'editPay': {
+      var a2 = parseMoney(f.amount); if (!(a2 > 0)) throw new UErr('Coloque um valor maior que zero.');
+      await write('update', 'payments', id, {amountCents: a2, paidOn: needDate(f.paidOn, 'Data inválida.'), method: (f.method || '').trim(), updatedAt: nowIso()});
+      sheet.editPay = null; sheet.dirty = false; paintSheet(); return toast('Pagamento corrigido. Saldo atualizado.');
+    }
+    case 'gross': {
+      var g = (f.gross || '').trim() === '' ? null : parseMoney(f.gross);
+      if (g !== null && !(g >= 0)) throw new UErr('Valor inválido.');
+      await write('update', 'charges', id, {grossCents: g}); sheet.dirty = false; paintSheet(); return toast(g === null ? 'Faturamento removido.' : 'Faturamento anotado: ' + m(g) + '.');
+    }
+    case 'promise': {
+      var pdt = needDate(f.promiseDate, 'Escolha a data prometida.');
+      await write('update', 'charges', id, {promiseDate: pdt, promiseNote: (f.promiseNote || '').trim()}); sheet.dirty = false; paintSheet(); return toast('Promessa anotada para ' + wdm(pdt) + '.');
+    }
+    case 'cancel': {
+      var cid = id; await write('update', 'charges', cid, {cancelledAt: nowIso(), cancelReason: (f.reason || '').trim()}); closeSheet(); return toast('Cobrança cancelada.');
+    }
+    case 'client': {
+      var cl = {name: (f.name || '').trim(), phone: phoneDigits(f.phone), notes: (f.notes || '').trim()};
+      if (!cl.name) throw new UErr('Coloque o nome do cliente.');
+      if (id) { await write('update', 'clients', id, cl); closeSheet(); return toast('Cliente atualizado.'); }
+      var nid = uid(); cl.createdAt = nowIso(); await write('set', 'clients', nid, cl); closeSheet();
+      var after = form.getAttribute('data-after');
+      if (after) { view.preClient = nid; render(); return toast(first(cl.name) + ' cadastrado. Complete o aluguel.'); }
+      go({tab: 'clientes', page: 'cliente', id: nid}); return toast('Cliente cadastrado.');
+    }
+    case 'account': {
+      var acc = {platform: (f.platform || '').trim(), label: (f.label || '').trim().toUpperCase(), region: (f.region || '').trim(), notes: (f.notes || '').trim()};
+      if (!acc.platform || !acc.label) throw new UErr('Coloque a plataforma e a identificação.');
+      if (id) { await write('update', 'accounts', id, acc); closeSheet(); return toast('Conta atualizada.'); }
+      var aid = uid(); acc.paused = false; acc.createdAt = nowIso(); await write('set', 'accounts', aid, acc); closeSheet();
+      stack = [{tab: 'contas'}]; view = {tab: 'contas', page: 'conta', id: aid}; render(); window.scrollTo(0, 0); return toast('Conta cadastrada. Agora escolha o cliente.');
+    }
+    case 'rental': {
+      var ac = get('accounts', id); if (!ac) throw new UErr('Conta não encontrada.');
+      if (ac.paused) throw new UErr('A conta está pausada.');
+      if (activeRental(id)) throw new UErr('Essa conta já está alugada. Encerre o aluguel atual antes.');
+      if (!get('clients', f.clientId)) throw new UErr('Escolha o cliente.');
+      var wk = parseMoney(f.weekly); if (!(wk > 0)) throw new UErr('Coloque o valor semanal.');
+      var fdd = needDate(f.firstDueDate, 'Data da primeira cobrança inválida.'), sd = needDate(f.startDate, 'Data de início inválida.');
+      var rid = uid();
+      await write('set', 'rentals', rid, {accountId: id, clientId: f.clientId, startDate: sd, dueWeekday: Number(f.dueWeekday), firstDueDate: fdd, endDate: null, rates: [{effectiveDate: fdd, weeklyCents: wk}], createdAt: nowIso()});
+      await generate(); view.preClient = null; render(); return toast('Conta alugada. Cobrança gerada.');
+    }
+    case 'adjust': {
+      var rr = get('rentals', id), nw = parseMoney(f.weekly); if (!(nw > 0)) throw new UErr('Coloque o novo valor.');
+      var ed = needDate(f.effectiveDate, 'Data inválida.');
+      var rates = (rr.rates || []).filter(function (x) { return x.effectiveDate !== ed; }).concat([{effectiveDate: ed, weeklyCents: nw}]);
+      await write('update', 'rentals', id, {rates: rates});
+      var n = 0;
+      if (f.applyOpen === '1') { var tg = list('charges').filter(function (c) { return c.rentalId === id && c.dueDate >= ed && !c.cancelledAt && paidFor(c.id) === 0; }); for (var i = 0; i < tg.length; i++) { await write('update', 'charges', tg[i].id, {amountCents: nw}); n++; } }
+      await generate(); closeSheet(); return toast('Novo valor de ' + m(nw) + ' a partir de ' + dm(ed) + '.' + (n ? ' ' + n + ' cobrança(s) atualizada(s).' : ''));
+    }
+    case 'endRental': {
+      var rt = get('rentals', id), end = needDate(f.endDate, 'Data inválida.');
+      if (end < rt.startDate) throw new UErr('O último dia não pode ser antes do início.');
+      await generate();
+      await write('update', 'rentals', id, {endDate: end});
+      var del = list('charges').filter(function (c) { return c.rentalId === id && c.dueDate > end && paidFor(c.id) === 0; });
+      for (var j = 0; j < del.length; j++) await write('delete', 'charges', del[j].id);
+      closeSheet(); render(); return toast('Aluguel encerrado. Pendências preservadas.');
+    }
+    case 'sub': {
+      var pct = Number(String(f.pct || '').replace(',', '.'));
+      var sub = {accountId: f.accountId, clientId: f.clientId, periodStart: needDate(f.periodStart, 'Coloque o início do período.'), periodEnd: needDate(f.periodEnd, 'Coloque o fim do período.'),
+        receivedCents: (f.received || '').trim() === '' ? 0 : parseMoney(f.received), clientBps: Math.round(pct * 100), status: f.status || 'aguardando',
+        receivedOn: f.receivedOn || null, passedOn: f.passedOn || null, notes: (f.notes || '').trim()};
+      if (!get('accounts', sub.accountId)) throw new UErr('Escolha a conta.');
+      if (!get('clients', sub.clientId)) throw new UErr('Escolha quem recebe a parte.');
+      if (sub.periodEnd < sub.periodStart) throw new UErr('O fim do período está antes do início.');
+      if (sub.receivedCents == null || sub.receivedCents < 0) throw new UErr('Valor recebido inválido.');
+      if (!(sub.clientBps >= 0 && sub.clientBps <= 10000)) throw new UErr('A parte do cliente vai de 0 a 100%.');
+      if (sub.status !== 'aguardando' && !sub.receivedCents) throw new UErr('Coloque quanto a plataforma pagou.');
+      if (sub.status !== 'aguardando' && !sub.receivedOn) sub.receivedOn = today;
+      if (sub.status === 'repassado' && !sub.passedOn) sub.passedOn = today;
+      if (id) { sub.createdAt = (get('subsidies', id) || {}).createdAt || nowIso(); await write('set', 'subsidies', id, sub); closeSheet(); return toast('Bônus atualizado.'); }
+      var sid = uid(); sub.createdAt = nowIso(); await write('set', 'subsidies', sid, sub); closeSheet();
+      go({tab: 'painel', page: 'bonus', id: sid}); return toast('Bônus registrado.');
+    }
+    case 'restore': {
+      var data; try { data = JSON.parse(f.json); } catch (e) { throw new UErr('Esse texto não é um backup válido.'); }
+      if (!data || !COLS.every(function (c) { return data[c] && typeof data[c] === 'object'; })) throw new UErr('Esse texto não é um backup deste app.');
+      if (!(await ask('Substituir todos os dados pelo backup?', 'Substituir', true))) return;
+      for (var ci = 0; ci < COLS.length; ci++) {
+        var col = COLS[ci], ids = Array.from(S[col].keys());
+        for (var x = 0; x < ids.length; x++) if (!data[col][ids[x]]) await write('delete', col, ids[x]);
+        var ks = Object.keys(data[col]);
+        for (var y = 0; y < ks.length; y++) await write('set', col, ks[y], data[col][ks[y]]);
+      }
+      closeSheet(); render(); return toast('Backup restaurado.');
+    }
+  }
+}
+
+function handleErr(e) {
+  if (e instanceof UErr) return toast(e.message, true);
+  console.error(e);
+  if (e && e.code === 'quota_exceeded') return toast('O armazenamento encheu. Faça um backup e peça para arquivar dados antigos.', true);
+  if (e && e.code === 'invalid_argument') return toast('Sem permissão para salvar. Abra pelo seu login do claude.ai.', true);
+  toast('Não foi possível salvar. Confira a internet e tente de novo.', true);
+}
+
+/* ---------- Eventos ---------- */
+document.addEventListener('click', function (e) {
+  var t = e.target;
+  // Botões auxiliares dentro de formulários
+  var pick = t.closest('[data-pick]');
+  if (pick) { var form = pick.closest('form'); form.querySelectorAll('[data-pick]').forEach(function (b) { b.classList.toggle('on', b === pick); }); form.elements.clientId.value = pick.getAttribute('data-pick'); return; }
+  var wdB = t.closest('[data-wd]');
+  if (wdB) { var f2 = wdB.closest('form'); f2.querySelectorAll('[data-wd]').forEach(function (b) { b.classList.toggle('on', b === wdB); }); var wv = Number(wdB.getAttribute('data-wd')); f2.elements.dueWeekday.value = wv; var fdI = f2.elements.firstDueDate; if (fdI && validDate(fdI.value) && wday(fdI.value) !== wv) fdI.value = nextWdFrom(today, wv); return; }
+  var chipSel = function (attr, setter) { var b = t.closest('[' + attr + ']'); if (!b) return false; var group = b.parentElement; group.querySelectorAll('[' + attr + ']').forEach(function (x) { x.classList.toggle('on', x === b); }); setter(b.getAttribute(attr), b.closest('form')); if (sheet) sheet.dirty = true; return true; };
+  if (chipSel('data-amt', function (v, f) { f.elements.amount.value = v; })) return;
+  if (chipSel('data-paydate', function (v, f) { f.elements.paidOn.value = v; })) return;
+  if (chipSel('data-method', function (v, f) { f.elements.method.value = v; })) return;
+  if (chipSel('data-setdate', function (v, f) { f.elements.promiseDate.value = v; })) return;
+  if (chipSel('data-plat', function (v, f) { f.elements.platform.value = v; })) return;
+  if (chipSel('data-pct', function (v, f) { f.elements.pct.value = v; f.elements.pct.dispatchEvent(new Event('input', {bubbles: true})); })) return;
+  if (chipSel('data-status', function (v, f) { f.elements.status.value = v; })) return;
+  var askB = t.closest('[data-ask]');
+  if (askB && sheet && sheet.resolve) { sheet.resolve(askB.getAttribute('data-ask') === '1'); return; }
+  var a = t.closest('[data-act]'); if (!a) return;
+  if (a.tagName === 'A' && a.getAttribute('href')) return;
+  e.preventDefault(); Promise.resolve(onAction(a)).catch(handleErr);
+});
+document.addEventListener('submit', function (e) {
+  var f = e.target.closest('form[data-form]'); if (!f) return; e.preventDefault();
+  var btn = f.querySelector('button:not([type=button])'); if (btn) btn.disabled = true;
+  Promise.resolve(onForm(f)).catch(handleErr).finally(function () { if (btn && btn.isConnected) btn.disabled = false; });
+});
+document.addEventListener('input', function (e) {
+  if (e.target.hasAttribute('data-search')) { view.q = e.target.value; var pos = e.target.selectionStart; render(); var s = document.querySelector('[data-search]'); if (s) { s.focus(); try { s.setSelectionRange(pos, pos); } catch (er) {} } return; }
+  if (sheet && e.target.closest('#sheet form')) sheet.dirty = true;
+  if (e.target.id === 'payAmt') { var cs = e.target.closest('form').querySelectorAll('[data-amt]'); cs.forEach(function (x) { x.classList.toggle('on', x.getAttribute('data-amt') === e.target.value); }); }
+});
+scrim.addEventListener('click', function () { if (sheet && sheet.resolve) sheet.resolve(false); else closeSheet(); });
+// Arrastar a folha para baixo fecha
+(function () {
+  var y0 = null, dy = 0;
+  sheetEl.addEventListener('touchstart', function (e) { if (sheetEl.scrollTop > 0) { y0 = null; return; } y0 = e.touches[0].clientY; dy = 0; }, {passive: true});
+  sheetEl.addEventListener('touchmove', function (e) { if (y0 === null) return; dy = e.touches[0].clientY - y0; if (dy > 0) { sheetEl.style.transition = 'none'; sheetEl.style.transform = 'translateY(' + dy + 'px)'; } }, {passive: true});
+  sheetEl.addEventListener('touchend', function () { if (y0 === null) return; sheetEl.style.transition = ''; sheetEl.style.transform = ''; if (dy > 110) { if (sheet && sheet.resolve) sheet.resolve(false); else closeSheet(); } y0 = null; });
+})();
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && sheet) { if (sheet.resolve) sheet.resolve(false); else closeSheet(); } });
+document.addEventListener('visibilitychange', function () { if (!document.hidden && todayLA() !== today) { today = todayLA(); generate(); render(); } });
+
+/* ================= Início ================= */
+var h0 = (location.hash || '').slice(1);
+if (['contas','clientes','painel'].indexOf(h0) >= 0) view = {tab: h0};
+function boot() {
+  ready = true; render(); generate();
+  if (mode === 'local') {
+    try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
+    try { if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(function () {}); } catch (e) {}
+  }
+}
+async function start() {
+  var hasClaude = !!(window.claude && typeof window.claude.use === 'function');
+  if (!hasClaude) { mode = 'local'; lsLoad(); return boot(); }
+  var timer = setTimeout(function () { if (!ready) app.innerHTML = '<div class="loading"><div><div class="spinner" style="margin:0 auto 10px"></div>Ainda conectando aos seus dados…<br><small>Confira a internet. Continuo tentando.</small></div></div>'; }, 10000);
+  db = await window.claude.use('db');
+  if (!db) { clearTimeout(timer); app.innerHTML = emptyState(I.people, 'Entre no claude.ai', 'Os dados ficam na sua conta. Abra este link no Safari já logado no claude.ai.'); return; }
+  mode = 'db';
+  var fresh = {}, got = {};
+  COLS.forEach(function (col) {
+    db.collection(col).onSnapshot(function (snap) {
+      var mp = new Map(); snap.docs.forEach(function (d) { if (d.exists) mp.set(d.id, d.data()); });
+      S[col] = mp; got[col] = true; if (!snap.metadata.fromCache) fresh[col] = true;
+      if (!ready && COLS.every(function (c) { return got[c]; }) && COLS.every(function (c) { return fresh[c]; })) { clearTimeout(timer); boot(); return; }
+      if (ready) schedule();
+    }, function () { got[col] = true; fresh[col] = true; toast('A conexão com os dados caiu. Feche e abra o app.', true); if (!ready && COLS.every(function (c) { return fresh[c]; })) { clearTimeout(timer); boot(); } });
+  });
+}
+start();
+})();
+</script>
+</body>
+</html>
