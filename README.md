@@ -15,8 +15,13 @@ No iPhone: abra no Safari, toque em Compartilhar e depois em "Adicionar à Tela 
 
 ## Onde ficam os dados
 
-No próprio aparelho (`localStorage`, chave `keyring-v1`). Não há servidor nem login.
-Use **Ajustes → Copiar backup** de vez em quando e guarde o texto numa nota ou e-mail. Para levar os dados a outro aparelho, use **Restaurar backup** lá.
+No Firebase próprio do Keyring (projeto `keyring-gd`, sem ligação com outros apps), na conta Google de quem entrar.
+- Login com Google. Entre com a mesma conta em qualquer aparelho e os dados aparecem sincronizados.
+- Funciona sem internet: as mudanças ficam guardadas e sobem quando a conexão volta.
+- Regras do banco (`firestore.rules`): cada conta só lê e escreve em `users/{uid}/...`. Qualquer outro caminho é negado.
+- Ajustes → Copiar backup continua disponível para guardar uma cópia em texto.
+
+As regras publicadas ficam no console do Firebase (Firestore → Regras). Se mudar `firestore.rules`, publique lá também.
 
 ## Regras
 
@@ -33,10 +38,11 @@ Use **Ajustes → Copiar backup** de vez em quando e guarde o texto numa nota ou
 index.html           o app inteiro (HTML, CSS e JavaScript num arquivo só)
 manifest.json        nome, cores e ícones para instalar na tela inicial
 sw.js                cache para abrir sem internet
+firestore.rules      regras de segurança do banco (cópia das publicadas no Firebase)
 icon-*.png           ícones
 .nojekyll            publica no GitHub Pages sem processamento
 ```
 
 Para editar, mexa em `index.html` e faça commit: o GitHub Pages publica sozinho em cerca de um minuto. Ao trocar arquivos além do `index.html`, aumente a versão em `CACHE` no `sw.js`.
 
-Quando aberto como artifact do claude.ai, o mesmo arquivo usa o armazenamento da conta do claude.ai em vez do aparelho.
+Quando aberto como artifact do claude.ai, o mesmo arquivo usa o armazenamento da conta do claude.ai em vez do Firebase.
