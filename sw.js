@@ -1,6 +1,6 @@
 // Keyring: funciona offline. A página vem da rede quando há internet (sempre a versão
 // mais nova) e do cache quando não há. Os dados ficam no aparelho, não passam por aqui.
-const CACHE = 'keyring-v2';
+const CACHE = 'keyring-v3';
 const ASSETS = ['./', './index.html', './manifest.json', './icon-180.png', './icon-192.png', './icon-512.png', './favicon.png'];
 
 self.addEventListener('install', e => {

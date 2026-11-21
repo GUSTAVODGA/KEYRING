@@ -519,8 +519,12 @@ function projected(ws) {
 // Gera as cobranças até o fim da semana atual. O id do documento é vínculo + vencimento:
 // abrir de novo, atualizar ou usar em dois aparelhos nunca cria cobrança repetida.
 var generating = false;
+var serverFresh = {};
 async function generate() {
   if (generating || !ready) return;
+  // No Firebase, só gera depois que contratos e cobranças chegaram do servidor; senão um aparelho
+  // com cache incompleto acharia que a cobrança não existe e a regravaria por cima.
+  if (mode === 'firebase' && !(serverFresh.rentals && serverFresh.charges)) return;
   generating = true;
   try {
     var horizon = weekEnd(today), todo = [];
@@ -531,7 +535,14 @@ async function generate() {
         if (!S.charges.has(id)) { var amt = rateFor(r, d); if (amt) todo.push([id, {rentalId: r.id, clientId: r.clientId, accountId: r.accountId, dueDate: d, amountCents: amt, promiseDate: null, promiseNote: '', cancelledAt: null, cancelReason: '', createdAt: nowIso()}]); }
       });
     });
-    for (var i = 0; i < todo.length; i++) await write('set', 'charges', todo[i][0], todo[i][1]);
+    for (var i = 0; i < todo.length; i++) {
+      if (mode === 'firebase') {
+        // Confere no servidor antes de criar: nunca sobrescreve uma cobrança que já existe.
+        var snap = await db.collection('charges').doc(todo[i][0]).get({source: 'server'});
+        if (snap.exists) continue;
+      }
+      await write('set', 'charges', todo[i][0], todo[i][1]);
+    }
   } catch (e) { toast('Não consegui gerar as cobranças da semana.', true); }
   finally { generating = false; }
 }
@@ -605,7 +616,7 @@ function ask(msg, okLabel, danger) {
   });
 }
 function fd2(form) { var o = {}; new FormData(form).forEach(function (v, k) { o[k] = typeof v === 'string' ? v : ''; }); return o; }
-function phoneDigits(raw) { var d = String(raw || '').replace(/\D/g, ''); if (d.length === 10) d = '1' + d; if (d.length < 11 || d.length > 15) throw new UErr('Coloque o telefone com código do país, ex.: +1 555 123 4567.'); return d; }
+function phoneDigits(raw) { var txt = String(raw || '').trim(), d = txt.replace(/\D/g, ''); if (d.length === 10 && txt[0] !== '+') d = '1' + d; if (d.length === 11 && (d[0] !== '1' || d[1] === '0' || d[1] === '1') && txt[0] !== '+') throw new UErr('Esse número parece brasileiro. Coloque com +55, ex.: +55 11 91234-5678.'); if (d.length < 11 || d.length > 15) throw new UErr('Coloque o telefone com código do país, ex.: +1 555 123 4567.'); return d; }
 function needDate(d, msg) { if (!validDate(d)) throw new UErr(msg); return d; }
 function emptyState(icon, title, text, btn) { return '<div class="empty">' + icon + '<b>' + esc(title) + '</b><div>' + esc(text) + '</div>' + (btn || '') + '</div>'; }
 
@@ -1223,7 +1234,9 @@ async function onAction(el) {
       return;
     case 'signOut':
       if (!(await ask('Sair da sua conta neste aparelho?', 'Sair', true))) return;
-      closeSheet(); await firebase.auth().signOut(); location.reload(); return;
+      closeSheet();
+      try { await firebase.auth().signOut(); await firebase.firestore().terminate(); await firebase.firestore().clearPersistence(); } catch (e) {}
+      location.reload(); return;
     case 'backup':
       var data = {app: 'keyring', exportadoEm: nowIso()}; COLS.forEach(function (c) { data[c] = Object.fromEntries(S[c]); });
       try { await navigator.clipboard.writeText(JSON.stringify(data)); toast('Backup copiado.'); } catch (e) { toast('Este aparelho não deixou copiar.', true); }
@@ -1425,7 +1438,8 @@ function listen(requireFresh, timer) {
   COLS.forEach(function (col) {
     db.collection(col).onSnapshot(function (snap) {
       var mp = new Map(); snap.docs.forEach(function (d) { if (d.exists) mp.set(d.id, d.data()); });
-      S[col] = mp; got[col] = true; if (!snap.metadata.fromCache) fresh[col] = true;
+      S[col] = mp; got[col] = true;
+      if (!snap.metadata.fromCache) { fresh[col] = true; if (!serverFresh[col]) { serverFresh[col] = true; if (ready && (col === 'rentals' || col === 'charges')) generate(); } }
       var okAll = COLS.every(function (c) { return got[c] && (!requireFresh || fresh[c]); });
       if (!ready && okAll) { clearTimeout(timer); boot(); return; }
       if (ready) schedule();
@@ -1436,8 +1450,8 @@ function startFirebase() {
   firebase.initializeApp(FB_CONFIG);
   var fs = firebase.firestore();
   try { fs.enablePersistence({synchronizeTabs: true}).catch(function () {}); } catch (e) {}
-  firebase.auth().getRedirectResult().catch(function (e) { loginScreen('Não consegui entrar: ' + (e.message || e.code)); });
   var started = false;
+  firebase.auth().getRedirectResult().catch(function (e) { if (!started) loginScreen('Não consegui entrar: ' + (e.message || e.code)); });
   firebase.auth().onAuthStateChanged(function (user) {
     if (!user) { if (!started) loginScreen(); return; }
     if (started) return;
