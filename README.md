@@ -2,8 +2,12 @@
 
 O chaveiro das contas: guarda as chaves de cada conta de delivery e mostra com quem cada uma está. App pessoal para controlar contas de plataformas de delivery (Grubhub, Amazon Flex, DoorDash…) alugadas para clientes: quem está com cada conta, quanto entrou na semana, quanto falta e quem precisa ser cobrado no WhatsApp.
 
-**Abrir:** https://gustavodga.github.io/KEYRING/
-No iPhone: abra no Safari, toque em Compartilhar e depois em "Adicionar à Tela de Início".
+## Ficha
+
+- **Abrir:** https://gustavodga.github.io/KEYRING/ (Safari → Compartilhar → Adicionar à Tela de Início)
+- **Quem usa:** Gustavo, com login Google
+- **Onde ficam os dados:** Firebase próprio (`keyring-gd`), separado dos outros apps. Regras em `firestore.rules`.
+- **Publicação:** GitHub Pages, a cada push na `main`. Sem etapa de build.
 
 ## Telas
 
